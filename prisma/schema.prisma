@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int              @id @default(autoincrement())
+  name         String?          @db.VarChar(255)
+  email        String           @unique @db.VarChar(255)
+  password     String           @db.VarChar(255)
+  token        String?          @db.VarChar(255)
+  isVerified   Boolean          @default(false)
+  firstName    String?          @db.VarChar(255)
+  lastName     String?          @db.VarChar(255)
+  phoneNumber  String?          @db.VarChar(20)
+  address      String?          @db.VarChar(255)
+  fatherName   String?          @db.VarChar(255)
+  motherName   String?          @db.VarChar(255)
+  city         String?          @db.VarChar(100)
+  state        String?          @db.VarChar(100)
+  country      String?          @db.VarChar(100)
+  profilePic   String?          @db.VarChar(500)
+  resume       String?          @db.VarChar(500)
+  education    Education[]
+  applications JobApplication[] // Relation
+}
+
+model Education {
+  id                Int     @id @default(autoincrement())
+  userId            Int
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  educationalLevel  String  @db.VarChar(50) // e.g., "10th", "12th", "B.Tech", etc.
+  schoolOrCollege   String  @db.VarChar(255)
+  specialization    String? @db.VarChar(255) // e.g., "Computer Science"
+  boardOrUniversity String? @db.VarChar(255) // e.g., "CBSE", "State Board", "JNTU"
+  percentage        Float
+  passedOutYear     Int
+  location          String? @db.VarChar(255)
+}
+
+model Job {
+  id             Int      @id @default(autoincrement())
+  jobTitle       String   @db.VarChar(255)
+  jobDescription String   @db.Text
+  skillsRequired Json // e.g., ["React", "Node.js", "SQL"]
+  location       String   @db.VarChar(255)
+  salary         String?  @db.VarChar(100) // e.g., "10-12 LPA"
+  experience     String?  @db.VarChar(100) // e.g., "0-2 years", "2+ years"
+  rounds         Json? // e.g., [{ round: "Technical", type: "MCQ" }]
+  jobRole        String?  @db.VarChar(100) // e.g., "Frontend Developer"
+  jobType        String?  @db.VarChar(100) // e.g., "Full-Time", "Internship", "Remote"
+  postedDate     DateTime @default(now())
+
+  // Company details
+  companyName    String           @db.VarChar(255)
+  companyWebsite String?          @db.VarChar(255)
+  companyLogo    String?          @db.VarChar(500)
+  companyEmail   String?          @db.VarChar(255)
+  companyPhone   String?          @db.VarChar(50)
+  applications   JobApplication[] // Relation
+
+  // Extra fields (recommended)
+  lastDateToApply DateTime?
+}
+
+model JobApplication {
+  id        Int      @id @default(autoincrement())
+  jobId     Int
+  userId    Int
+  resume    String?  @db.VarChar(500) // Optional: resume link used during apply
+  status    String   @default("Pending") // e.g., Pending, Selected, Rejected
+  appliedAt DateTime @default(now())
+
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
