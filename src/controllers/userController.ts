@@ -53,7 +53,7 @@ export const verifyEmail = async (
   return res.status(200).json({ message: "Email verified successfully" });
 };
 
-// 🛂 Login using username and password
+// 🛂 Login with JWT token and cookie
 export const login = async (req: Request, res: Response): Promise<Response> => {
   const { userName, password } = req.body;
 
@@ -64,8 +64,23 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   const isMatch = await comparePassword(password, user.password);
   if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-  const token = generateToken(user.id);
-  return res.json({ user, token });
+  // Generate token with expiration
+const token = generateToken(user.id.toString());  
+  // Set HTTP-only cookie
+  res.cookie('auth_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // HTTPS in production
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  });
+
+  // Return user data (without password) and token
+  const { password: _, ...userWithoutPassword } = user;
+  return res.json({ 
+    user: userWithoutPassword, 
+    token,
+    message: "Login successful" 
+  });
 };
 
 export const requestPasswordOtp = async (
@@ -109,11 +124,18 @@ export const resetPassword = async (
   return res.json({ message: "Password updated successfully" });
 };
 
-// 🚪 Logout (JWT-based, stateless)
+// 🚪 Logout with cookie clearing
 export const logout = async (
   _req: Request,
   res: Response
 ): Promise<Response> => {
+  // Clear the auth cookie
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  });
+  
   return res.status(200).json({ message: "Logged out successfully" });
 };
 
@@ -126,13 +148,54 @@ export const updateProfile = async (
     const userId = (req as any).user.id;
     const data = req.body;
 
+    // Remove sensitive fields that shouldn't be updated directly
+    const { password, otp, otpExpiry, ...safeData } = data;
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data,
+      data: safeData,
+      select: {
+        id: true,
+        userName: true,
+        email: true,
+        isVerified: true,
+        // Exclude password and OTP fields
+      }
     });
 
-    return res.json({ user: updatedUser });
+    return res.json({ 
+      user: updatedUser,
+      message: "Profile updated successfully" 
+    });
   } catch (error) {
     return res.status(500).json({ message: "Update failed", error });
+  }
+};
+
+// 🔍 Get current user profile
+export const getProfile = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  try {
+    const userId = (req as any).user.id;
+    
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        userName: true,
+        email: true,
+        isVerified: true,
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({ user });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to get profile", error });
   }
 };
