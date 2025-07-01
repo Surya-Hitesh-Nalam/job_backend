@@ -21,7 +21,7 @@ export const signup = async (
 
   const hashed = await hashPassword(password);
   const otp = generateOTP();
-  const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+  const expiry = new Date(Date.now() + 10 * 60 * 1000); 
 
   const user = await prisma.user.create({
     data: { userName, email, password: hashed, otp, otpExpiry: expiry },
@@ -53,7 +53,6 @@ export const verifyEmail = async (
   return res.status(200).json({ message: "Email verified successfully" });
 };
 
-// 🛂 Login with JWT token and cookie
 export const login = async (req: Request, res: Response): Promise<Response> => {
   const { userName, password } = req.body;
 
@@ -64,17 +63,14 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   const isMatch = await comparePassword(password, user.password);
   if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-  // Generate token with expiration
 const token = generateToken(user.id.toString());  
-  // Set HTTP-only cookie
   res.cookie('auth_token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // HTTPS in production
+    secure: process.env.NODE_ENV === 'production', 
     sameSite: 'strict',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000 
   });
 
-  // Return user data (without password) and token
   const { password: _, ...userWithoutPassword } = user;
   return res.json({ 
     user: userWithoutPassword, 
@@ -124,12 +120,10 @@ export const resetPassword = async (
   return res.json({ message: "Password updated successfully" });
 };
 
-// 🚪 Logout with cookie clearing
 export const logout = async (
   _req: Request,
   res: Response
 ): Promise<Response> => {
-  // Clear the auth cookie
   res.clearCookie('auth_token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -139,16 +133,14 @@ export const logout = async (
   return res.status(200).json({ message: "Logged out successfully" });
 };
 
-// 🔧 Update user profile
 export const updateProfile = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   try {
-    const userId = (req as any).user.id;
+    const userId = parseInt((req as any).user.id); 
     const data = req.body;
 
-    // Remove sensitive fields that shouldn't be updated directly
     const { password, otp, otpExpiry, ...safeData } = data;
 
     const updatedUser = await prisma.user.update({
@@ -159,7 +151,6 @@ export const updateProfile = async (
         userName: true,
         email: true,
         isVerified: true,
-        // Exclude password and OTP fields
       }
     });
 
@@ -172,13 +163,12 @@ export const updateProfile = async (
   }
 };
 
-// 🔍 Get current user profile
 export const getProfile = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   try {
-    const userId = (req as any).user.id;
+    const userId = parseInt((req as any).user.id); 
     
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -196,6 +186,7 @@ export const getProfile = async (
 
     return res.json({ user });
   } catch (error) {
+    console.error("Get profile error:", error); // Add logging for debugging
     return res.status(500).json({ message: "Failed to get profile", error });
   }
 };

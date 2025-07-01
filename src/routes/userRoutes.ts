@@ -7,12 +7,12 @@ import {
   resetPassword, 
   signup, 
   updateProfile, 
-  verifyEmail 
+  verifyEmail,
+  getProfile  
 } from "../controllers/userController";
 
 const router = express.Router();
 
-// Wrapper functions to ensure proper typing
 const asyncHandler = (fn: Function) => (req: express.Request, res: express.Response, next: express.NextFunction) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
@@ -20,9 +20,11 @@ const asyncHandler = (fn: Function) => (req: express.Request, res: express.Respo
 router.post("/signup", asyncHandler(signup));
 router.post("/verify-email", asyncHandler(verifyEmail));
 router.post("/login", asyncHandler(login));
-router.post("/logout", asyncHandler(logout));
-router.put("/update-profile", protect, asyncHandler(updateProfile));
 router.post("/request-password-otp", asyncHandler(requestPasswordOtp));
 router.post("/reset-password", asyncHandler(resetPassword));
+
+router.post("/logout", protect, asyncHandler(logout));  
+router.get("/profile", protect, asyncHandler(getProfile));  
+router.put("/update-profile", protect, asyncHandler(updateProfile));
 
 export default router;
