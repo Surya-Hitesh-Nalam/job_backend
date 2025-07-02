@@ -137,31 +137,56 @@ export const updateProfile = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
+  console.log("🔧 updateProfile controller hit");
+
   try {
-    const userId = parseInt((req as any).user.id); 
-    const data = req.body;
+    const userId = parseInt((req as any).user?.id);
+    console.log("Updating user:", userId);
 
-    const { password, otp, otpExpiry, ...safeData } = data;
+    const { password, otp, otpExpiry, education, ...safeData } = req.body;
 
-    const updatedUser = await prisma.user.update({
+    // Step 1: Update base user data
+    const userUpdate = await prisma.user.update({
       where: { id: userId },
       data: safeData,
-      select: {
-        id: true,
-        userName: true,
-        email: true,
-        isVerified: true,
-      }
     });
 
-    return res.json({ 
+    // Step 2: Replace education data
+    if (Array.isArray(education)) {
+      // Delete old records
+      await prisma.education.deleteMany({
+        where: { userId },
+      });
+
+      // Add new records
+      for (const edu of education) {
+        console.log("Inserting education:", edu);
+        await prisma.education.create({
+          data: {
+            ...edu,
+            userId,
+          },
+        });
+      }
+    }
+
+    // Step 3: Fetch full profile including education
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { education: true },
+    });
+
+    return res.json({
       user: updatedUser,
-      message: "Profile updated successfully" 
+      message: "Profile updated successfully",
     });
   } catch (error) {
+    console.error("❌ Update failed:", error);
     return res.status(500).json({ message: "Update failed", error });
   }
 };
+
+
 
 export const getProfile = async (
   req: Request,
