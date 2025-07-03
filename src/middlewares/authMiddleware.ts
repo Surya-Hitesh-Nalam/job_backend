@@ -11,10 +11,8 @@ if (!JWT_SECRET) {
 
 export const protect: RequestHandler = (req, res, next) => {
   try {
-    // Try to get token from Authorization header first
     let token = req.headers.authorization?.split(" ")[1];
     
-    // If no token in header, try to get from cookie
     if (!token) {
       token = req.cookies?.auth_token;
     }
@@ -27,14 +25,12 @@ export const protect: RequestHandler = (req, res, next) => {
       return;
     }
 
-    // Verify token
     const decoded = jwt.verify(token, JWT_SECRET) as any;
     (req as any).user = decoded;
 
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      // Clear expired cookie
       res.clearCookie('auth_token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',

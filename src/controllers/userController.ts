@@ -7,31 +7,41 @@ import { generateOTP } from "../utils/otp";
 
 const prisma = new PrismaClient();
 
-export const signup = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const { userName, email, password } = req.body;
+import { Role } from "@prisma/client"; 
+
+export const signup = async (req: Request, res: Response): Promise<Response> => {
+  const { userName, email, password, role } = req.body;
 
   const existing = await prisma.user.findFirst({
     where: { OR: [{ email }, { userName }] },
   });
   if (existing)
-    return res.status(400).json({ message: "Username or Email exists" });
+    return res.status(400).json({ message: "Username or Email already exists" });
 
   const hashed = await hashPassword(password);
   const otp = generateOTP();
   const expiry = new Date(Date.now() + 10 * 60 * 1000); 
 
-  const user = await prisma.user.create({
-    data: { userName, email, password: hashed, otp, otpExpiry: expiry },
+  const assignedRole = role === "ADMIN" ? Role.ADMIN : Role.USER;
+
+  await prisma.user.create({
+    data: {
+      userName,
+      email,
+      password: hashed,
+      otp,
+      otpExpiry: expiry,
+      role: assignedRole,
+    },
   });
 
   await sendOtpEmail(email, otp);
-  return res
-    .status(201)
-    .json({ message: "OTP sent to email. Please verify your account." });
+
+  return res.status(201).json({
+    message: "OTP sent to email. Please verify your account.",
+  });
 };
+
 
 export const verifyEmail = async (
   req: Request,
@@ -145,20 +155,16 @@ export const updateProfile = async (
 
     const { password, otp, otpExpiry, education, ...safeData } = req.body;
 
-    // Step 1: Update base user data
     const userUpdate = await prisma.user.update({
       where: { id: userId },
       data: safeData,
     });
 
-    // Step 2: Replace education data
     if (Array.isArray(education)) {
-      // Delete old records
       await prisma.education.deleteMany({
         where: { userId },
       });
 
-      // Add new records
       for (const edu of education) {
         console.log("Inserting education:", edu);
         await prisma.education.create({
@@ -170,7 +176,6 @@ export const updateProfile = async (
       }
     }
 
-    // Step 3: Fetch full profile including education
     const updatedUser = await prisma.user.findUnique({
       where: { id: userId },
       include: { education: true },
@@ -211,7 +216,7 @@ export const getProfile = async (
 
     return res.json({ user });
   } catch (error) {
-    console.error("Get profile error:", error); // Add logging for debugging
+    console.error("Get profile error:", error); 
     return res.status(500).json({ message: "Failed to get profile", error });
   }
 };

@@ -15,14 +15,15 @@ datasource db {
 }
 
 model User {
-  id           Int              @id @default(autoincrement())
-  userName         String?          @db.VarChar(255)
+  id           String           @id @default(uuid())
+  userName     String?          @db.VarChar(255)
   email        String           @unique @db.VarChar(255)
   password     String           @db.VarChar(255)
   token        String?          @db.VarChar(255)
   isVerified   Boolean          @default(false)
-  otp         String?   @db.VarChar(10)
-  otpExpiry   DateTime?
+  otp          String?          @db.VarChar(10)
+  otpExpiry    DateTime?
+
   firstName    String?          @db.VarChar(255)
   lastName     String?          @db.VarChar(255)
   phoneNumber  String?          @db.VarChar(20)
@@ -34,13 +35,18 @@ model User {
   country      String?          @db.VarChar(100)
   profilePic   String?          @db.VarChar(500)
   resume       String?          @db.VarChar(500)
+
+  role         Role             @default(USER)   
+
   education    Education[]
-  applications JobApplication[] // Relation
+  applications JobApplication[]
+  roundResults RoundResult[]
 }
 
+
 model Education {
-  id                Int     @id @default(autoincrement())
-  userId            Int
+  id                String  @id @default(uuid())
+  userId            String
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   educationalLevel  String  @db.VarChar(50) // e.g., "10th", "12th", "B.Tech", etc.
   schoolOrCollege   String  @db.VarChar(255)
@@ -52,14 +58,13 @@ model Education {
 }
 
 model Job {
-  id             Int      @id @default(autoincrement())
+  id             String      @id @default(uuid())
   jobTitle       String   @db.VarChar(255)
   jobDescription String   @db.Text
   skillsRequired Json // e.g., ["React", "Node.js", "SQL"]
   location       String   @db.VarChar(255)
   salary         String?  @db.VarChar(100) // e.g., "10-12 LPA"
   experience     String?  @db.VarChar(100) // e.g., "0-2 years", "2+ years"
-  rounds         Json? // e.g., [{ round: "Technical", type: "MCQ" }]
   jobRole        String?  @db.VarChar(100) // e.g., "Frontend Developer"
   jobType        String?  @db.VarChar(100) // e.g., "Full-Time", "Internship", "Remote"
   postedDate     DateTime @default(now())
@@ -71,19 +76,52 @@ model Job {
   companyEmail   String?          @db.VarChar(255)
   companyPhone   String?          @db.VarChar(50)
   applications   JobApplication[] // Relation
+  rounds      Round[]
 
   // Extra fields (recommended)
   lastDateToApply DateTime?
 }
 
+enum Role {
+  ADMIN
+  USER
+}
+
 model JobApplication {
-  id        Int      @id @default(autoincrement())
-  jobId     Int
-  userId    Int
-  resume    String?  @db.VarChar(500) // Optional: resume link used during apply
-  status    String   @default("Pending") // e.g., Pending, Selected, Rejected
+  id        String      @id @default(uuid())
+  jobId     String
+  userId    String
+  resume    String?  @db.VarChar(500)
+  status    String   @default("Pending")
   appliedAt DateTime @default(now())
+
+  currentRound Int?   // New: tracks current round number or null if finished
 
   job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+
+model Round {
+  id          String    @id @default(uuid())
+  jobId       String
+  roundNumber Int
+  roundName   String   @db.VarChar(100)
+  description String?  @db.Text
+
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  results     RoundResult[]
+}
+
+model RoundResult {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  jobId     Int
+  roundName String   @db.VarChar(100)
+  status    String   @default("Qualified") // or "Rejected", "Pending"
+  timestamp DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
