@@ -103,25 +103,28 @@ model JobApplication {
 
 
 model Round {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   jobId       String
   roundNumber Int
   roundName   String   @db.VarChar(100)
   description String?  @db.Text
 
-  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  results     RoundResult[]
+  job     Job          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  results RoundResult[]
 }
 
 model RoundResult {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  jobId     Int
+  id        String   @id @default(uuid())
+  userId    String   // ✅ Fixed from Int to String
+  jobId     String   // ✅ Fixed from Int to String
   roundName String   @db.VarChar(100)
-  status    String   @default("Qualified") // or "Rejected", "Pending"
+  status    String   @default("Qualified")
   timestamp DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId, roundName]) // ✅ Optional but recommended
 }
+
 
