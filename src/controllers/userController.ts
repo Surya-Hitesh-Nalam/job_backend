@@ -150,7 +150,7 @@ export const updateProfile = async (
   console.log("🔧 updateProfile controller hit");
 
   try {
-    const userId = parseInt((req as any).user?.id);
+    const userId = (req as any).user?.id as string;
     console.log("Updating user:", userId);
 
     const { password, otp, otpExpiry, education, ...safeData } = req.body;
@@ -166,7 +166,6 @@ export const updateProfile = async (
       });
 
       for (const edu of education) {
-        console.log("Inserting education:", edu);
         await prisma.education.create({
           data: {
             ...edu,
@@ -192,14 +191,13 @@ export const updateProfile = async (
 };
 
 
-
 export const getProfile = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
   try {
-    const userId = parseInt((req as any).user.id); 
-    
+    const userId = (req as any).user.id as string;
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -207,7 +205,8 @@ export const getProfile = async (
         userName: true,
         email: true,
         isVerified: true,
-      }
+        role: true,
+      },
     });
 
     if (!user) {
@@ -216,7 +215,7 @@ export const getProfile = async (
 
     return res.json({ user });
   } catch (error) {
-    console.error("Get profile error:", error); 
+    console.error("Get profile error:", error);
     return res.status(500).json({ message: "Failed to get profile", error });
   }
 };

@@ -5,10 +5,19 @@ import { createJob, deleteJob, getAllJobs, getJobById, updateJob } from "../cont
 
 const router = express.Router();
 
-router.get("/", getAllJobs);          
-router.get("/:id", getJobById);         
+const asyncHandler = (fn: any) => (req: express.Request, res: express.Response, next: express.NextFunction) =>{
+    Promise.resolve(fn(req, res, next)).catch(next);
+}
 
-router.post("/", protect, isAdmin, createJob);    
+
+router.get("/", asyncHandler(getAllJobs));          
+router.get("/:id", asyncHandler(getJobById));         
+
+router.post("/", protect, isAdmin, asyncHandler(createJob));    
+router.put("/:id", protect, isAdmin, asyncHandler(updateJob));  
+router.delete("/:id", protect, isAdmin, asyncHandler(deleteJob)); 
+
+router.post("/", protect, isAdmin, asyncHandler(createJob));    
 router.put("/:id", protect, isAdmin, updateJob);  
 router.delete("/:id", protect, isAdmin, deleteJob); 
 

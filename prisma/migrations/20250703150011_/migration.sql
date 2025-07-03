@@ -1,6 +1,9 @@
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('ADMIN', 'USER');
+
 -- CreateTable
 CREATE TABLE "User" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "userName" VARCHAR(255),
     "email" VARCHAR(255) NOT NULL,
     "password" VARCHAR(255) NOT NULL,
@@ -19,14 +22,15 @@ CREATE TABLE "User" (
     "country" VARCHAR(100),
     "profilePic" VARCHAR(500),
     "resume" VARCHAR(500),
+    "role" "Role" NOT NULL DEFAULT 'USER',
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Education" (
-    "id" SERIAL NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "educationalLevel" VARCHAR(50) NOT NULL,
     "schoolOrCollege" VARCHAR(255) NOT NULL,
     "specialization" VARCHAR(255),
@@ -40,14 +44,13 @@ CREATE TABLE "Education" (
 
 -- CreateTable
 CREATE TABLE "Job" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "jobTitle" VARCHAR(255) NOT NULL,
     "jobDescription" TEXT NOT NULL,
     "skillsRequired" JSONB NOT NULL,
     "location" VARCHAR(255) NOT NULL,
     "salary" VARCHAR(100),
     "experience" VARCHAR(100),
-    "rounds" JSONB,
     "jobRole" VARCHAR(100),
     "jobType" VARCHAR(100),
     "postedDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -63,18 +66,46 @@ CREATE TABLE "Job" (
 
 -- CreateTable
 CREATE TABLE "JobApplication" (
-    "id" SERIAL NOT NULL,
-    "jobId" INTEGER NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "jobId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "resume" VARCHAR(500),
     "status" TEXT NOT NULL DEFAULT 'Pending',
     "appliedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "currentRound" INTEGER,
 
     CONSTRAINT "JobApplication_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Round" (
+    "id" TEXT NOT NULL,
+    "jobId" TEXT NOT NULL,
+    "roundNumber" INTEGER NOT NULL,
+    "roundName" VARCHAR(100) NOT NULL,
+    "description" TEXT,
+
+    CONSTRAINT "Round_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Results" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "jobId" TEXT NOT NULL,
+    "roundId" TEXT NOT NULL,
+    "roundName" VARCHAR(100) NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'Qualified',
+    "timestamp" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Results_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Results_userId_jobId_roundName_key" ON "Results"("userId", "jobId", "roundName");
 
 -- AddForeignKey
 ALTER TABLE "Education" ADD CONSTRAINT "Education_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -84,3 +115,15 @@ ALTER TABLE "JobApplication" ADD CONSTRAINT "JobApplication_jobId_fkey" FOREIGN 
 
 -- AddForeignKey
 ALTER TABLE "JobApplication" ADD CONSTRAINT "JobApplication_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Round" ADD CONSTRAINT "Round_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Results" ADD CONSTRAINT "Results_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Results" ADD CONSTRAINT "Results_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Results" ADD CONSTRAINT "Results_roundId_fkey" FOREIGN KEY ("roundId") REFERENCES "Round"("id") ON DELETE CASCADE ON UPDATE CASCADE;
