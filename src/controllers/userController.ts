@@ -219,3 +219,34 @@ export const getProfile = async (
     return res.status(500).json({ message: "Failed to get profile", error });
   }
 };
+
+
+const safeUser = (user: any) => {
+  const {
+    password,
+    otp,
+    otpExpiry,
+    applications,
+    roundResults,
+    ...rest
+  } = user;
+  return rest;
+};
+
+export const getAllUsers = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const users = await prisma.user.findMany({
+      include: {
+        education: true, 
+      },
+    });
+
+    const cleanedUsers = users.map(safeUser);
+
+    return res.json({ users: cleanedUsers });
+  } catch (error) {
+    console.error("❌ Failed to fetch users:", error);
+    return res.status(500).json({ message: "Failed to fetch users", error });
+  }
+};
+

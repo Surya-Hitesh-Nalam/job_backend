@@ -8,8 +8,10 @@ import {
   signup, 
   updateProfile, 
   verifyEmail,
-  getProfile  
+  getProfile,  
+  getAllUsers
 } from "../controllers/userController";
+import { isAdmin } from "../middlewares/isAdmin";
 
 const router = express.Router();
 
@@ -23,6 +25,7 @@ router.post("/login", asyncHandler(login));
 router.post("/request-password-otp", asyncHandler(requestPasswordOtp));
 router.post("/reset-password", asyncHandler(resetPassword));
 
+router.get("/", protect, isAdmin, asyncHandler(getAllUsers));
 router.post("/logout", protect, asyncHandler(logout));  
 router.get("/profile", protect, asyncHandler(getProfile));  
 router.put("/update-profile", protect, asyncHandler(updateProfile));
