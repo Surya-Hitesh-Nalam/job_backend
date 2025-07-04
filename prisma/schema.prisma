@@ -16,7 +16,7 @@ datasource db {
 
 model User {
   id           String           @id @default(uuid())
-  userName     String?          @unique @db.VarChar(255)
+  username     String?          @unique @db.VarChar(255)
   email        String           @unique @db.VarChar(255)
   password     String           @db.VarChar(255)
   token        String?          @db.VarChar(255)
@@ -48,10 +48,10 @@ model Education {
   id                String  @id @default(uuid())
   userId            String
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  educationalLevel  String  @db.VarChar(50) // e.g., "10th", "12th", "B.Tech", etc.
+  educationalLevel  String  @db.VarChar(50) 
   schoolOrCollege   String  @db.VarChar(255)
-  specialization    String? @db.VarChar(255) // e.g., "Computer Science"
-  boardOrUniversity String? @db.VarChar(255) // e.g., "CBSE", "State Board", "JNTU"
+  specialization    String? @db.VarChar(255) 
+  boardOrUniversity String? @db.VarChar(255) 
   percentage        Float
   passedOutYear     Int
   location          String? @db.VarChar(255)
@@ -61,25 +61,23 @@ model Job {
   id             String      @id @default(uuid())
   jobTitle       String   @db.VarChar(255)
   jobDescription String   @db.Text
-  skillsRequired Json // e.g., ["React", "Node.js", "SQL"]
+  skillsRequired Json 
   location       String   @db.VarChar(255)
-  salary         String?  @db.VarChar(100) // e.g., "10-12 LPA"
-  experience     String?  @db.VarChar(100) // e.g., "0-2 years", "2+ years"
-  jobRole        String?  @db.VarChar(100) // e.g., "Frontend Developer"
-  jobType        String?  @db.VarChar(100) // e.g., "Full-Time", "Internship", "Remote"
+  salary         String?  @db.VarChar(100) 
+  experience     String?  @db.VarChar(100) 
+  jobRole        String?  @db.VarChar(100) 
+  jobType        String?  @db.VarChar(100) 
   postedDate     DateTime @default(now())
 
-  // Company details
   companyName    String           @db.VarChar(255)
   companyWebsite String?          @db.VarChar(255)
   companyLogo    String?          @db.VarChar(500)
   companyEmail   String?          @db.VarChar(255)
   companyPhone   String?          @db.VarChar(50)
-  applications   JobApplication[] // Relation
+  applications   JobApplication[] 
   rounds      Round[]
-  roundResults Results[] // Add this line to complete the relation
+  roundResults Results[] 
 
-  // Extra fields (recommended)
   lastDateToApply DateTime?
 }
 
@@ -96,7 +94,7 @@ model JobApplication {
   status    String   @default("Pending")
   appliedAt DateTime @default(now())
 
-  currentRound Int?   // New: tracks current round number or null if finished
+  currentRound Int?   
 
   job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -116,8 +114,8 @@ model Round {
 
 model Results {
   id        String   @id @default(uuid())
-  userId    String   // ✅ Fixed from Int to String
-  jobId     String   // ✅ Fixed from Int to String
+  userId    String   
+  jobId     String   
   roundId   String
   roundName String   @db.VarChar(100)
   status    String   @default("Qualified")
@@ -127,7 +125,7 @@ model Results {
   job   Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
   round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, jobId, roundName]) // ✅ Optional but recommended
+  @@unique([userId, jobId, roundName]) 
 }
 
 

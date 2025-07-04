@@ -9,13 +9,13 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
   try {
     const notFoundUsers: string[] = [];
 
-    for (const userName of users) {
+    for (const username of users) {
       const user = await prisma.user.findUnique({
-        where: { userName: userName },
+        where: { username: username },
       });
 
       if (!user) {
-        notFoundUsers.push(userName);
+        notFoundUsers.push(username);
         continue;
       }
 

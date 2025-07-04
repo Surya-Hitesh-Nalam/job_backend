@@ -10,10 +10,10 @@ const prisma = new PrismaClient();
 import { Role } from "@prisma/client"; 
 
 export const signup = async (req: Request, res: Response): Promise<Response> => {
-  const { userName, email, password, role } = req.body;
+  const { username, email, password, role } = req.body;
 
   const existing = await prisma.user.findFirst({
-    where: { OR: [{ email }, { userName }] },
+    where: { OR: [{ email }, { username }] },
   });
   if (existing)
     return res.status(400).json({ message: "Username or Email already exists" });
@@ -26,7 +26,7 @@ export const signup = async (req: Request, res: Response): Promise<Response> => 
 
   await prisma.user.create({
     data: {
-      userName,
+      username,
       email,
       password: hashed,
       otp,
@@ -64,9 +64,9 @@ export const verifyEmail = async (
 };
 
 export const login = async (req: Request, res: Response): Promise<Response> => {
-  const { userName, password } = req.body;
+  const { username, password } = req.body;
 
-  const user = await prisma.user.findFirst({ where: { userName: userName } });
+  const user = await prisma.user.findFirst({ where: { username: username } });
   if (!user || !user.isVerified) 
     return res.status(403).json({ message: "Unverified or not found" });
 
@@ -202,7 +202,7 @@ export const getProfile = async (
       where: { id: userId },
       select: {
         id: true,
-        userName: true,
+        username: true,
         email: true,
         isVerified: true,
         role: true,
