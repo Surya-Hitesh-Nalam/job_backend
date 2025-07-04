@@ -73,7 +73,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   const isMatch = await comparePassword(password, user.password);
   if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-const token = generateToken(user.id.toString());  
+const token = generateToken(user.id.toString(),user.role);  
   res.cookie('auth_token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production', 

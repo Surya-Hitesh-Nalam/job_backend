@@ -9,7 +9,12 @@ import {
 
 const router = express.Router();
 
-router.post("/upload", protect, isAdmin, uploadRoundResults);
+const asyncHandler = (fn: Function) => (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+
+router.post("/upload", protect, isAdmin, asyncHandler(uploadRoundResults));
 router.get("/user/:userId", protect, getUserRoundResults);
 router.get("/job/:jobId", protect, isAdmin, getJobRoundSummary);
 

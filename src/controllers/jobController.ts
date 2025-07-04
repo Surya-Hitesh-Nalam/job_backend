@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+
 export const createJob = async (req: Request, res: Response) => {
   try {
     const {
@@ -31,7 +32,6 @@ export const createJob = async (req: Request, res: Response) => {
         location,
         salary,
         experience,
-        rounds,
         jobRole,
         jobType,
         companyName,
@@ -40,6 +40,16 @@ export const createJob = async (req: Request, res: Response) => {
         companyEmail,
         companyPhone,
         lastDateToApply: lastDateToApply ? new Date(lastDateToApply) : null,
+        rounds: {
+          create: Array.isArray(rounds) ? rounds.map((r: any) => ({
+            roundNumber: r.roundNumber,
+            roundName: r.roundName,
+            description: r.description,
+          })) : [],
+        },
+      },
+      include: {
+        rounds: true, 
       },
     });
 

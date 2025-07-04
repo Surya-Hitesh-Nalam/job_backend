@@ -3,7 +3,6 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// POST /api/rounds/upload
 export const uploadRoundResults = async (req: Request, res: Response) => {
   const { jobId, roundName, users, status } = req.body;
 
@@ -32,7 +31,7 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
         create: {
           userId: user.id,
           jobId,
-          roundId: "", // TODO: Provide the correct roundId value here
+          roundId: "", 
           roundName,
           status,
         },
@@ -51,9 +50,8 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ GET /api/rounds/user/:userId
 export const getUserRoundResults = async (req: Request, res: Response) => {
-  const userId = req.params.userId; // UUID string
+  const userId = req.params.userId; 
 
   try {
     const results = await prisma.results.findMany({
@@ -68,9 +66,8 @@ export const getUserRoundResults = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ GET /api/rounds/job/:jobId
 export const getJobRoundSummary = async (req: Request, res: Response) => {
-  const jobId = req.params.jobId; // UUID string
+  const jobId = req.params.jobId; 
 
   try {
     const rounds = await prisma.results.findMany({

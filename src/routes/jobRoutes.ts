@@ -17,8 +17,4 @@ router.post("/", protect, isAdmin, asyncHandler(createJob));
 router.put("/:id", protect, isAdmin, asyncHandler(updateJob));  
 router.delete("/:id", protect, isAdmin, asyncHandler(deleteJob)); 
 
-router.post("/", protect, isAdmin, asyncHandler(createJob));    
-router.put("/:id", protect, isAdmin, updateJob);  
-router.delete("/:id", protect, isAdmin, deleteJob); 
-
 export default router;
