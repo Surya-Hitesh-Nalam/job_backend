@@ -3,32 +3,30 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+import { sendRoundResultEmail } from "../utils/email";
+
 export const uploadRoundResults = async (req: Request, res: Response) => {
   const { jobId, roundName, users, status } = req.body;
 
   try {
     const notFoundUsers: string[] = [];
 
-    // ✅ Find the roundId based on jobId and roundName
-    const round = await prisma.round.findFirst({
-      where: {
-        jobId,
-        roundName,
-      },
-    });
-
-    if (!round) {
-      return res.status(400).json({ message: "Round not found for the given job and roundName" });
-    }
-
     for (const username of users) {
       const user = await prisma.user.findUnique({
-        where: { username: username },
+        where: { username: username }, 
       });
 
       if (!user) {
         notFoundUsers.push(username);
         continue;
+      }
+
+      const round = await prisma.round.findFirst({
+        where: { jobId, roundName }
+      });
+
+      if (!round) {
+        return res.status(404).json({ message: `Round "${roundName}" not found for this job.` });
       }
 
       await prisma.results.upsert({
@@ -48,10 +46,13 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
           status,
         },
       });
+
+      // 🎉 Send email if qualified
+      await sendRoundResultEmail(user.email, roundName, status);
     }
 
     return res.json({
-      message: "Round results recorded successfully.",
+      message: "Round results recorded and emails sent.",
       skippedUsers: notFoundUsers.length > 0 ? notFoundUsers : undefined,
     });
   } catch (error) {

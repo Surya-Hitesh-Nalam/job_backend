@@ -4,6 +4,8 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // 🟢 POST /api/apply/:jobId
+import { sendJobApplicationEmail } from "../utils/email"; // ✅ Add this at the top
+
 export const applyToJob = async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
   const jobId = req.params.jobId;
@@ -14,6 +16,12 @@ export const applyToJob = async (req: Request, res: Response) => {
     });
 
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+    });
+
+    if (!job) return res.status(404).json({ message: "Job not found" });
 
     const alreadyApplied = await prisma.jobApplication.findFirst({
       where: { userId, jobId },
@@ -33,12 +41,16 @@ export const applyToJob = async (req: Request, res: Response) => {
       },
     });
 
+    // ✅ Send job application confirmation email
+    await sendJobApplicationEmail(user.email, user.username || "User", job.jobTitle, job.companyName);
+
     return res.status(201).json({ message: "Application submitted", application });
   } catch (error) {
     console.error("❌ Application failed:", error);
     return res.status(500).json({ message: "Failed to apply", error });
   }
 };
+
 
 // 🟢 GET /api/applications
 export const getMyApplications = async (req: Request, res: Response) => {
