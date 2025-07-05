@@ -64,6 +64,11 @@ export const createJob = async (req: Request, res: Response) => {
 export const getAllJobs = async (_req: Request, res: Response) => {
   try {
     const jobs = await prisma.job.findMany({
+      include: {
+        rounds: {
+          orderBy: { roundNumber: "asc" }, // Optional: to return rounds in order
+        },
+      },
       orderBy: { postedDate: "desc" },
     });
     res.json(jobs);
@@ -72,10 +77,16 @@ export const getAllJobs = async (_req: Request, res: Response) => {
   }
 };
 
+
 export const getJobById = async (req: Request, res: Response) => {
   try {
     const job = await prisma.job.findUnique({
-      where: { id:req.params.id },
+      where: { id: req.params.id },
+      include: {
+        rounds: {
+          orderBy: { roundNumber: "asc" }, // Optional: consistent ordering
+        },
+      },
     });
 
     if (!job) {
@@ -88,17 +99,91 @@ export const getJobById = async (req: Request, res: Response) => {
   }
 };
 
+
 export const updateJob = async (req: Request, res: Response) => {
+  const jobId = req.params.id;
+  const dataToUpdate = req.body;
+
   try {
-    const updated = await prisma.job.update({
-      where: { id: req.params.id },
-      data: req.body,
+    const existingJob = await prisma.job.findUnique({ where: { id: jobId } });
+
+    if (!existingJob) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    // ✅ Update core job fields if present
+    const updatedJob = await prisma.job.update({
+      where: { id: jobId },
+      data: {
+        ...(dataToUpdate.jobTitle && { jobTitle: dataToUpdate.jobTitle }),
+        ...(dataToUpdate.jobDescription && { jobDescription: dataToUpdate.jobDescription }),
+        ...(dataToUpdate.skillsRequired && { skillsRequired: dataToUpdate.skillsRequired }),
+        ...(dataToUpdate.location && { location: dataToUpdate.location }),
+        ...(dataToUpdate.salary && { salary: dataToUpdate.salary }),
+        ...(dataToUpdate.experience && { experience: dataToUpdate.experience }),
+        ...(dataToUpdate.jobRole && { jobRole: dataToUpdate.jobRole }),
+        ...(dataToUpdate.jobType && { jobType: dataToUpdate.jobType }),
+        ...(dataToUpdate.companyName && { companyName: dataToUpdate.companyName }),
+        ...(dataToUpdate.companyWebsite && { companyWebsite: dataToUpdate.companyWebsite }),
+        ...(dataToUpdate.companyLogo && { companyLogo: dataToUpdate.companyLogo }),
+        ...(dataToUpdate.companyEmail && { companyEmail: dataToUpdate.companyEmail }),
+        ...(dataToUpdate.companyPhone && { companyPhone: dataToUpdate.companyPhone }),
+        ...(dataToUpdate.lastDateToApply && {
+          lastDateToApply: new Date(dataToUpdate.lastDateToApply),
+        }),
+      },
     });
-    res.json({ message: "Job updated", job: updated });
+
+    // ✅ Update only provided rounds (match by roundNumber + jobId)
+    if (Array.isArray(dataToUpdate.rounds)) {
+      for (const round of dataToUpdate.rounds) {
+        const { roundNumber, roundName, description } = round;
+
+        const existingRound = await prisma.round.findFirst({
+          where: {
+            jobId,
+            roundNumber,
+          },
+        });
+
+        if (existingRound) {
+          await prisma.round.update({
+            where: { id: existingRound.id },
+            data: {
+              roundName: roundName ?? existingRound.roundName,
+              description: description ?? existingRound.description,
+            },
+          });
+        } else {
+          await prisma.round.create({
+            data: {
+              jobId,
+              roundNumber,
+              roundName,
+              description,
+            },
+          });
+        }
+      }
+    }
+
+    const jobWithUpdatedRounds = await prisma.job.findUnique({
+      where: { id: jobId },
+      include: { rounds: {
+        orderBy: { roundNumber: "asc"}
+      } },
+    });
+
+    return res.json({
+      message: "Job and rounds updated successfully",
+      job: jobWithUpdatedRounds,
+    });
   } catch (err) {
+    console.error("Update job error:", err);
     res.status(500).json({ message: "Failed to update job", error: err });
   }
 };
+
 
 export const deleteJob = async (req: Request, res: Response) => {
   try {

@@ -9,6 +9,18 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
   try {
     const notFoundUsers: string[] = [];
 
+    // ✅ Find the roundId based on jobId and roundName
+    const round = await prisma.round.findFirst({
+      where: {
+        jobId,
+        roundName,
+      },
+    });
+
+    if (!round) {
+      return res.status(400).json({ message: "Round not found for the given job and roundName" });
+    }
+
     for (const username of users) {
       const user = await prisma.user.findUnique({
         where: { username: username },
@@ -31,7 +43,7 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
         create: {
           userId: user.id,
           jobId,
-          roundId:"", 
+          roundId: round.id,
           roundName,
           status,
         },
@@ -44,11 +56,10 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("❌ Upload failed:", error);
-    return res
-      .status(500)
-      .json({ message: "Error uploading round results", error });
+    return res.status(500).json({ message: "Error uploading round results", error });
   }
 };
+
 
 export const getUserRoundResults = async (req: Request, res: Response) => {
   const userId = req.params.userId; 
@@ -67,17 +78,23 @@ export const getUserRoundResults = async (req: Request, res: Response) => {
 };
 
 export const getJobRoundSummary = async (req: Request, res: Response) => {
-  const jobId = req.params.jobId; 
+  const jobId = req.params.jobId;
 
   try {
     const rounds = await prisma.results.findMany({
       where: { jobId },
-      include: { user: true },
-      orderBy: { roundName: "asc", timestamp: "desc" },
+      include: {
+        user: true,
+      },
+      orderBy: [
+        { roundName: "asc" },
+        { timestamp: "desc" }
+      ],
     });
 
     res.json({ rounds });
   } catch (error) {
+    console.error("❌ Error fetching round summary:", error);
     res.status(500).json({ message: "Failed to fetch job round summary", error });
   }
 };
