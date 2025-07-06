@@ -94,3 +94,87 @@ export const getApplicationsForJob = async (req: Request, res: Response) => {
   }
 };
 
+import ExcelJS from "exceljs";
+
+
+export const exportApplicationsExcel = async (req: Request, res: Response) => {
+  const jobId = req.params.jobId;
+
+  try {
+    const job = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    const applications = await prisma.jobApplication.findMany({
+      where: { jobId },
+      include: {
+        user: {
+          include: { education: true },
+        },
+      },
+      orderBy: { appliedAt: "desc" },
+    });
+
+    const eduLevelsSet = new Set<string>();
+    applications.forEach((app) => {
+      app.user.education.forEach((edu) => eduLevelsSet.add(edu.educationalLevel));
+    });
+    const eduLevels = Array.from(eduLevelsSet);
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Job Applications");
+
+    const baseColumns = [
+      { header: "Name", key: "name", width: 25 },
+      { header: "Username", key: "userName", width: 20 },
+      { header: "Email", key: "email", width: 30 },
+      { header: "Phone", key: "phoneNumber", width: 20 },
+      { header: "Resume", key: "resume", width: 40 },
+      { header: "City", key: "city", width: 20 },
+      { header: "State", key: "state", width: 20 },
+      { header: "Country", key: "country", width: 20 },
+      { header: "Applied At", key: "appliedAt", width: 25 },
+    ];
+
+    const educationColumns = eduLevels.map((level) => ({
+      header: `${level} %`,
+      key: level.toLowerCase().replace(/[^a-z0-9]/gi, "_"),
+      width: 15,
+    }));
+
+    worksheet.columns = [...baseColumns, ...educationColumns];
+
+    applications.forEach((app) => {
+      const u = app.user;
+
+      const rowData: any = {
+        name: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
+        userName: u.username,
+        email: u.email,
+        phoneNumber: u.phoneNumber || "N/A",
+        resume: u.resume || "N/A",
+        city: u.city || "",
+        state: u.state || "",
+        country: u.country || "",
+        appliedAt: app.appliedAt.toLocaleString(),
+      };
+
+      eduLevels.forEach((level) => {
+        const match = u.education.find((edu) => edu.educationalLevel === level);
+        const key = level.toLowerCase().replace(/[^a-z0-9]/gi, "_");
+        rowData[key] = match?.percentage ?? "-";
+      });
+
+      worksheet.addRow(rowData);
+    });
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename="applications_${job.jobTitle.replace(/\s+/g, "_")}.xlsx"`);
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error("❌ Excel export error:", error);
+    return res.status(500).json({ message: "Failed to export Excel", error });
+  }
+};
+

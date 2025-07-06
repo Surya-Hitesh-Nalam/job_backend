@@ -5,6 +5,7 @@ import {
   uploadRoundResults,
   getUserRoundResults,
   getJobRoundSummary,
+  exportRoundResults,
 } from "../controllers/roundController";
 
 const router = express.Router();
@@ -17,5 +18,7 @@ const asyncHandler = (fn: Function) => (req: express.Request, res: express.Respo
 router.post("/upload", protect, isAdmin, asyncHandler(uploadRoundResults));
 router.get("/user/:userId", protect, getUserRoundResults);
 router.get("/job/:jobId", protect, isAdmin, getJobRoundSummary);
+router.get("/export", exportRoundResults);
+
 
 export default router;
