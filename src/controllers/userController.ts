@@ -67,9 +67,14 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   const { username, password } = req.body;
 
   const user = await prisma.user.findFirst({ where: { username: username } });
-  if (!user || !user.isVerified) 
-    return res.status(403).json({ message: "Unverified or not found" });
+  if (!user) 
+    return res.status(403).json({ message: "User not found" });
 
+  if (!user.isVerified){
+    const otp=generateOTP()
+    await sendOtpEmail(user.email,otp );
+    return res.status(403).json({ message: "Please verify your email first. OTP sent to your email." });
+  }
   const isMatch = await comparePassword(password, user.password);
   if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
@@ -200,20 +205,18 @@ export const getProfile = async (
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        isVerified: true,
-        role: true,
-      },
+      include:{
+        education:true
+      }
     });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.json({ user });
+    const cleanedUser = safeUser(user);
+
+    return res.json({ user: cleanedUser });
   } catch (error) {
     console.error("Get profile error:", error);
     return res.status(500).json({ message: "Failed to get profile", error });

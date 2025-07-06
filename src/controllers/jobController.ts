@@ -66,7 +66,7 @@ export const getAllJobs = async (_req: Request, res: Response) => {
     const jobs = await prisma.job.findMany({
       include: {
         rounds: {
-          orderBy: { roundNumber: "asc" }, // Optional: to return rounds in order
+          orderBy: { roundNumber: "asc" }, 
         },
       },
       orderBy: { postedDate: "desc" },
@@ -84,7 +84,7 @@ export const getJobById = async (req: Request, res: Response) => {
       where: { id: req.params.id },
       include: {
         rounds: {
-          orderBy: { roundNumber: "asc" }, // Optional: consistent ordering
+          orderBy: { roundNumber: "asc" },
         },
       },
     });
@@ -110,8 +110,6 @@ export const updateJob = async (req: Request, res: Response) => {
     if (!existingJob) {
       return res.status(404).json({ message: "Job not found" });
     }
-
-    // ✅ Update core job fields if present
     const updatedJob = await prisma.job.update({
       where: { id: jobId },
       data: {
