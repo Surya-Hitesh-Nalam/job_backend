@@ -3,8 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// 🟢 POST /api/apply/:jobId
-import { sendJobApplicationEmail } from "../utils/email"; // ✅ Add this at the top
+import { sendJobApplicationEmail } from "../utils/email"; 
 
 export const applyToJob = async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
@@ -13,6 +12,7 @@ export const applyToJob = async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      include: { education: true },
     });
 
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -31,6 +31,42 @@ export const applyToJob = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "You already applied for this job" });
     }
 
+    const btech = user.education.find(
+      (edu) => edu.educationalLevel === "B.Tech"
+    );
+
+    if (!btech) {
+      return res.status(400).json({
+        message: "Eligibility check failed: No B.Tech information provided.",
+      });
+    }
+
+    if (btech.noOfActiveBacklogs && btech.noOfActiveBacklogs > 0) {
+      return res.status(400).json({
+        message: "Eligibility check failed: You have active backlogs.",
+      });
+    }
+
+    const eligibleBranches: string[] = (job as any).eligibleBranches || [];
+    if (
+      eligibleBranches.length > 0 &&
+      !eligibleBranches.includes(btech.specialization || "")
+    ) {
+      return res.status(400).json({
+        message: `Not eligible: Your branch (${btech.specialization}) is not allowed.`,
+      });
+    }
+
+    const eligibleYears: number[] = (job as any).eligibleYears || [];
+    if (
+      eligibleYears.length > 0 &&
+      !eligibleYears.includes(btech.passedOutYear)
+    ) {
+      return res.status(400).json({
+        message: `Not eligible: Your year of passing (${btech.passedOutYear}) is not allowed.`,
+      });
+    }
+
     const application = await prisma.jobApplication.create({
       data: {
         user: { connect: { id: userId } },
@@ -41,8 +77,12 @@ export const applyToJob = async (req: Request, res: Response) => {
       },
     });
 
-    // ✅ Send job application confirmation email
-    await sendJobApplicationEmail(user.email, user.username || "User", job.jobTitle, job.companyName);
+    await sendJobApplicationEmail(
+      user.email,
+      user.username || "User",
+      job.jobTitle,
+      job.companyName
+    );
 
     return res.status(201).json({ message: "Application submitted", application });
   } catch (error) {
@@ -52,7 +92,6 @@ export const applyToJob = async (req: Request, res: Response) => {
 };
 
 
-// 🟢 GET /api/applications
 export const getMyApplications = async (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
 
@@ -82,14 +121,14 @@ export const getApplicationsForJob = async (req: Request, res: Response) => {
     const applications = await prisma.jobApplication.findMany({
       where: { jobId },
       include: {
-        user: true, // ✅ Includes all user fields
+        user: true,
       },
       orderBy: { appliedAt: "desc" },
     });
 
     return res.json({ jobTitle: job.jobTitle, applications });
   } catch (error) {
-    console.error("❌ Error fetching applications:", error);
+    console.error("Error fetching applications:", error);
     return res.status(500).json({ message: "Failed to fetch applications", error });
   }
 };
@@ -173,7 +212,7 @@ export const exportApplicationsExcel = async (req: Request, res: Response) => {
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
-    console.error("❌ Excel export error:", error);
+    console.error(" Excel export error:", error);
     return res.status(500).json({ message: "Failed to export Excel", error });
   }
 };

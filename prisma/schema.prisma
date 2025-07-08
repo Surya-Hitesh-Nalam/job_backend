@@ -55,6 +55,9 @@ model Education {
   percentage        Float
   passedOutYear     Int
   location          String? @db.VarChar(255)
+
+  noOfActiveBacklogs Int? @default(0)
+
 }
 
 model Job {
@@ -79,6 +82,10 @@ model Job {
   roundResults Results[] 
 
   lastDateToApply DateTime?
+
+  allowedBranches     String[]     @default([])
+  allowedPassingYears Int[]        @default([])
+
 }
 
 enum Role {

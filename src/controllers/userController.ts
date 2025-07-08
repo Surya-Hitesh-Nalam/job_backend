@@ -152,7 +152,7 @@ export const updateProfile = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  console.log("🔧 updateProfile controller hit");
+  console.log("updateProfile controller hit");
 
   try {
     const userId = (req as any).user?.id as string;
@@ -190,7 +190,7 @@ export const updateProfile = async (
       message: "Profile updated successfully",
     });
   } catch (error) {
-    console.error("❌ Update failed:", error);
+    console.error("Update failed:", error);
     return res.status(500).json({ message: "Update failed", error });
   }
 };
@@ -248,8 +248,30 @@ export const getAllUsers = async (req: Request, res: Response): Promise<Response
 
     return res.json({ users: cleanedUsers });
   } catch (error) {
-    console.error("❌ Failed to fetch users:", error);
+    console.error("Failed to fetch users:", error);
     return res.status(500).json({ message: "Failed to fetch users", error });
   }
 };
 
+export const getAdminDashboard = async (_req: Request, res: Response) => {
+  try {
+    const [jobsCount, applicationsCount, usersCount, qualifiedCount] = await Promise.all([
+      prisma.job.count(),
+      prisma.jobApplication.count(),
+      prisma.user.count(),
+      prisma.results.count({ where: { status: "Qualified" } }),
+    ]);
+
+    return res.json({
+      dashboard: {
+        totalJobs: jobsCount,
+        totalApplications: applicationsCount,
+        totalUsers: usersCount,
+        totalQualified: qualifiedCount,
+      },
+    });
+  } catch (error) {
+    console.error("Admin dashboard failed:", error);
+    return res.status(500).json({ message: "Failed to load admin dashboard", error });
+  }
+};

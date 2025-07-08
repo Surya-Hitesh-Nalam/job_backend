@@ -22,6 +22,8 @@ export const createJob = async (req: Request, res: Response) => {
       companyEmail,
       companyPhone,
       lastDateToApply,
+      allowedBranches,   
+      allowedPassingYears,      
     } = req.body;
 
     const job = await prisma.job.create({
@@ -39,24 +41,30 @@ export const createJob = async (req: Request, res: Response) => {
         companyLogo,
         companyEmail,
         companyPhone,
+        allowedBranches,  
+        allowedPassingYears,    
         lastDateToApply: lastDateToApply ? new Date(lastDateToApply) : null,
         rounds: {
-          create: Array.isArray(rounds) ? rounds.map((r: any) => ({
-            roundNumber: r.roundNumber,
-            roundName: r.roundName,
-            description: r.description,
-          })) : [],
+          create: Array.isArray(rounds)
+            ? rounds.map((r: any) => ({
+                roundNumber: r.roundNumber,
+                roundName: r.roundName,
+                description: r.description,
+              }))
+            : [],
         },
       },
       include: {
-        rounds: true, 
+        rounds: true,
       },
     });
 
     return res.status(201).json({ message: "Job created", job });
   } catch (err) {
     console.error("Create job error:", err);
-    return res.status(500).json({ message: "Failed to create job", error: err });
+    return res
+      .status(500)
+      .json({ message: "Failed to create job", error: err });
   }
 };
 
@@ -132,7 +140,6 @@ export const updateJob = async (req: Request, res: Response) => {
       },
     });
 
-    // ✅ Update only provided rounds (match by roundNumber + jobId)
     if (Array.isArray(dataToUpdate.rounds)) {
       for (const round of dataToUpdate.rounds) {
         const { roundNumber, roundName, description } = round;

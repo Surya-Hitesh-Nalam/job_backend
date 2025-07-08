@@ -9,7 +9,8 @@ import {
   updateProfile, 
   verifyEmail,
   getProfile,  
-  getAllUsers
+  getAllUsers,
+  getAdminDashboard
 } from "../controllers/userController";
 import { isAdmin } from "../middlewares/isAdmin";
 
@@ -25,6 +26,7 @@ router.post("/login", asyncHandler(login));
 router.post("/request-password-otp", asyncHandler(requestPasswordOtp));
 router.post("/reset-password", asyncHandler(resetPassword));
 
+router.get("/userDashboard", protect, asyncHandler(getAdminDashboard)); 
 router.get("/", protect, isAdmin, asyncHandler(getAllUsers));
 router.post("/logout", protect, asyncHandler(logout));  
 router.get("/profile", protect, asyncHandler(getProfile));  
