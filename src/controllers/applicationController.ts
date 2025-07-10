@@ -86,7 +86,7 @@ export const applyToJob = async (req: Request, res: Response) => {
 
     return res.status(201).json({ message: "Application submitted", application });
   } catch (error) {
-    console.error("❌ Application failed:", error);
+    console.error("Application failed:", error);
     return res.status(500).json({ message: "Failed to apply", error });
   }
 };
