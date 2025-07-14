@@ -19,6 +19,7 @@ model User {
   username     String?          @unique @db.VarChar(255)
   email        String           @unique @db.VarChar(255)
   password     String           @db.VarChar(255)
+  gender       String?        @db.VarChar(100)
   token        String?          @db.VarChar(255)
   isVerified   Boolean          @default(false)
   otp          String?          @db.VarChar(10)
@@ -49,7 +50,7 @@ model Education {
   userId            String
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   educationalLevel  String  @db.VarChar(50) 
-  schoolOrCollege   String  @db.VarChar(255)
+  institution       String  @db.VarChar(255)
   specialization    String? @db.VarChar(255) 
   boardOrUniversity String? @db.VarChar(255) 
   percentage        Float

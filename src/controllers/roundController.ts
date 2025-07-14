@@ -47,8 +47,6 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
           status,
         },
       });
-
-      // 🎉 Send email if qualified
       await sendRoundResultEmail(user.email, roundName, status);
     }
 
@@ -57,7 +55,7 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
       skippedUsers: notFoundUsers.length > 0 ? notFoundUsers : undefined,
     });
   } catch (error) {
-    console.error("❌ Upload failed:", error);
+    console.error("Upload failed:", error);
     return res.status(500).json({ message: "Error uploading round results", error });
   }
 };
@@ -96,10 +94,40 @@ export const getJobRoundSummary = async (req: Request, res: Response) => {
 
     res.json({ rounds });
   } catch (error) {
-    console.error("❌ Error fetching round summary:", error);
+    console.error("Error fetching round summary:", error);
     res.status(500).json({ message: "Failed to fetch job round summary", error });
   }
 };
+
+export const getSpecificRoundResults = async (req: Request, res: Response) => {
+  const { jobId, roundName } = req.params;
+
+  try {
+    const results = await prisma.results.findMany({
+      where: {
+        jobId,
+        roundName,
+      },
+      include: {
+        user: true,
+        job: true,
+      },
+      orderBy: {
+        timestamp: "desc",
+      },
+    });
+
+    if (!results || results.length === 0) {
+      return res.status(404).json({ message: "No results found for the specified round." });
+    }
+
+    res.json({ roundResults: results });
+  } catch (error) {
+    console.error("Error fetching round-specific results:", error);
+    res.status(500).json({ message: "Failed to fetch specific round results", error });
+  }
+};
+
 
 export const exportRoundResults = async (req: Request, res: Response) => {
   try {
@@ -163,7 +191,7 @@ export const exportRoundResults = async (req: Request, res: Response) => {
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
-    console.error("❌ Excel export failed:", error);
+    console.error("Excel export failed:", error);
     res.status(500).json({ message: "Failed to export round results", error });
   }
 };
