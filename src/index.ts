@@ -5,6 +5,7 @@ import roundRoutes from "./routes/roundRoutes";
 import jobAppRoutes from "./routes/applicationRoutes";
 import jobRoutes from "./routes/jobRoutes";
 import cors from "cors";
+import path from 'path';
 import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
@@ -17,6 +18,7 @@ app.use(cors({
   origin: "*", 
   credentials: true
 }));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.use(express.json());
 app.use("/api/rounds", roundRoutes);
@@ -38,3 +40,15 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
+process.on("SIGINT",async()=>{
+  console.log("Closing server...");
+  await prisma.$disconnect();
+  process.exit(0);
+})
+
+process.on("SIGTERM",async()=>{
+  console.log("Closing server...");
+  await prisma.$disconnect();
+  process.exit(0);
+})

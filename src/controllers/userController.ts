@@ -148,10 +148,7 @@ export const logout = async (
   return res.status(200).json({ message: "Logged out successfully" });
 };
 
-export const updateProfile = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
+export const updateProfile = async (req: Request, res: Response): Promise<Response> => {
   console.log("updateProfile controller hit");
 
   try {
@@ -160,6 +157,14 @@ export const updateProfile = async (
 
     const { password, otp, otpExpiry, education, ...safeData } = req.body;
 
+    // Handle image upload
+    if (req.file) {
+      const imagePath = `/uploads/${req.file.filename}`;  // Public URL relative to static folder
+      safeData.profilePic = imagePath;  // Assuming your DB has 'profilePhoto' field
+    }
+
+    console.log("Safe data to update:", safeData);
+    
     const userUpdate = await prisma.user.update({
       where: { id: userId },
       data: safeData,

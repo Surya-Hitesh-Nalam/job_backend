@@ -13,6 +13,7 @@ import {
   getAdminDashboard
 } from "../controllers/userController";
 import { isAdmin } from "../middlewares/isAdmin";
+import { upload } from "../middlewares/multer";
 
 const router = express.Router();
 
@@ -30,6 +31,6 @@ router.get("/userDashboard", protect, asyncHandler(getAdminDashboard));
 router.get("/", protect, isAdmin, asyncHandler(getAllUsers));
 router.post("/logout", protect, asyncHandler(logout));  
 router.get("/profile", protect, asyncHandler(getProfile));  
-router.put("/update-profile", protect, asyncHandler(updateProfile));
+router.put("/update-profile", protect, upload.single('profilePic'),asyncHandler(updateProfile));
 
 export default router;
