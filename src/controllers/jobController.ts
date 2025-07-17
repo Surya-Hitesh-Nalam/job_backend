@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import path from "path";
+import fs from "fs";
 
 const prisma = new PrismaClient();
 
@@ -107,6 +109,19 @@ export const getJobById = async (req: Request, res: Response) => {
   }
 };
 
+const deleteFile = (relativeFilePath: string) => {
+  if (!relativeFilePath) return;
+
+  const cleanPath = relativeFilePath.startsWith('/') ? relativeFilePath.substring(1) : relativeFilePath;
+
+  const absolutePath = path.resolve(__dirname, '../../', cleanPath);
+
+  if (fs.existsSync(absolutePath)) {
+    fs.unlinkSync(absolutePath);
+    console.log(`Deleted file: ${absolutePath}`);
+  }
+};
+
 
 export const updateJob = async (req: Request, res: Response) => {
   const jobId = req.params.id;
@@ -118,26 +133,36 @@ export const updateJob = async (req: Request, res: Response) => {
     if (!existingJob) {
       return res.status(404).json({ message: "Job not found" });
     }
+
+    const updatedData: any = {
+      ...(dataToUpdate.jobTitle && { jobTitle: dataToUpdate.jobTitle }),
+      ...(dataToUpdate.jobDescription && { jobDescription: dataToUpdate.jobDescription }),
+      ...(dataToUpdate.skillsRequired && { skillsRequired: dataToUpdate.skillsRequired }),
+      ...(dataToUpdate.location && { location: dataToUpdate.location }),
+      ...(dataToUpdate.salary && { salary: dataToUpdate.salary }),
+      ...(dataToUpdate.experience && { experience: dataToUpdate.experience }),
+      ...(dataToUpdate.jobRole && { jobRole: dataToUpdate.jobRole }),
+      ...(dataToUpdate.jobType && { jobType: dataToUpdate.jobType }),
+      ...(dataToUpdate.companyName && { companyName: dataToUpdate.companyName }),
+      ...(dataToUpdate.companyWebsite && { companyWebsite: dataToUpdate.companyWebsite }),
+      ...(dataToUpdate.companyEmail && { companyEmail: dataToUpdate.companyEmail }),
+      ...(dataToUpdate.companyPhone && { companyPhone: dataToUpdate.companyPhone }),
+      ...(dataToUpdate.lastDateToApply && {
+        lastDateToApply: new Date(dataToUpdate.lastDateToApply),
+      }),
+    };
+
+    const file = req.file as Express.Multer.File;
+    if (file) {
+      if (existingJob.companyLogo) {
+        deleteFile(existingJob.companyLogo);
+      }
+      updatedData.companyLogo = `/uploads/${file.filename}`;
+    }
+
     const updatedJob = await prisma.job.update({
       where: { id: jobId },
-      data: {
-        ...(dataToUpdate.jobTitle && { jobTitle: dataToUpdate.jobTitle }),
-        ...(dataToUpdate.jobDescription && { jobDescription: dataToUpdate.jobDescription }),
-        ...(dataToUpdate.skillsRequired && { skillsRequired: dataToUpdate.skillsRequired }),
-        ...(dataToUpdate.location && { location: dataToUpdate.location }),
-        ...(dataToUpdate.salary && { salary: dataToUpdate.salary }),
-        ...(dataToUpdate.experience && { experience: dataToUpdate.experience }),
-        ...(dataToUpdate.jobRole && { jobRole: dataToUpdate.jobRole }),
-        ...(dataToUpdate.jobType && { jobType: dataToUpdate.jobType }),
-        ...(dataToUpdate.companyName && { companyName: dataToUpdate.companyName }),
-        ...(dataToUpdate.companyWebsite && { companyWebsite: dataToUpdate.companyWebsite }),
-        ...(dataToUpdate.companyLogo && { companyLogo: dataToUpdate.companyLogo }),
-        ...(dataToUpdate.companyEmail && { companyEmail: dataToUpdate.companyEmail }),
-        ...(dataToUpdate.companyPhone && { companyPhone: dataToUpdate.companyPhone }),
-        ...(dataToUpdate.lastDateToApply && {
-          lastDateToApply: new Date(dataToUpdate.lastDateToApply),
-        }),
-      },
+      data: updatedData,
     });
 
     if (Array.isArray(dataToUpdate.rounds)) {
@@ -145,10 +170,7 @@ export const updateJob = async (req: Request, res: Response) => {
         const { roundNumber, roundName, description } = round;
 
         const existingRound = await prisma.round.findFirst({
-          where: {
-            jobId,
-            roundNumber,
-          },
+          where: { jobId, roundNumber },
         });
 
         if (existingRound) {
@@ -161,12 +183,7 @@ export const updateJob = async (req: Request, res: Response) => {
           });
         } else {
           await prisma.round.create({
-            data: {
-              jobId,
-              roundNumber,
-              roundName,
-              description,
-            },
+            data: { jobId, roundNumber, roundName, description },
           });
         }
       }
@@ -174,20 +191,20 @@ export const updateJob = async (req: Request, res: Response) => {
 
     const jobWithUpdatedRounds = await prisma.job.findUnique({
       where: { id: jobId },
-      include: { rounds: {
-        orderBy: { roundNumber: "asc"}
-      } },
+      include: { rounds: { orderBy: { roundNumber: "asc" } } },
     });
 
     return res.json({
       message: "Job and rounds updated successfully",
       job: jobWithUpdatedRounds,
     });
+
   } catch (err) {
     console.error("Update job error:", err);
     res.status(500).json({ message: "Failed to update job", error: err });
   }
 };
+
 
 
 export const deleteJob = async (req: Request, res: Response) => {
