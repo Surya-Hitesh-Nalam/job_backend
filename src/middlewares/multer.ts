@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { Request } from 'express';
 
-// Ensure uploads folder exists at project root
+// Ensure uploads folder exists
 const uploadPath = path.resolve(__dirname, '../../uploads');
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, { recursive: true });
@@ -21,4 +21,3 @@ const storage: StorageEngine = multer.diskStorage({
 });
 
 export const upload = multer({ storage });
-

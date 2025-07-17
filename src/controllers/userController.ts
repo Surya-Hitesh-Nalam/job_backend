@@ -148,39 +148,69 @@ export const logout = async (
   return res.status(200).json({ message: "Logged out successfully" });
 };
 
+import fs from 'fs';
+import path from 'path';
+const deleteFile = (relativeFilePath: string) => {
+  if (!relativeFilePath) return;
+
+  const cleanPath = relativeFilePath.startsWith('/') ? relativeFilePath.substring(1) : relativeFilePath;
+
+  const absolutePath = path.resolve(__dirname, '../../', cleanPath);
+
+  if (fs.existsSync(absolutePath)) {
+    fs.unlinkSync(absolutePath);
+    console.log(`Deleted file: ${absolutePath}`);
+  } else {
+    console.log(`File not found: ${absolutePath}`);
+  }
+};
+
+
 export const updateProfile = async (req: Request, res: Response): Promise<Response> => {
   console.log("updateProfile controller hit");
 
   try {
     const userId = (req as any).user?.id as string;
-    console.log("Updating user:", userId);
 
     const { password, otp, otpExpiry, education, ...safeData } = req.body;
 
-    // Handle image upload
-    if (req.file) {
-      const imagePath = `/uploads/${req.file.filename}`;  // Public URL relative to static folder
-      safeData.profilePic = imagePath;  // Assuming your DB has 'profilePhoto' field
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (files?.profilePic && files.profilePic[0]) {
+      if (existingUser?.profilePic) {
+        deleteFile(existingUser.profilePic);
+      }
+
+      const profilePicFile = files.profilePic[0];
+      safeData.profilePic = `/uploads/${profilePicFile.filename}`;
     }
 
-    console.log("Safe data to update:", safeData);
-    
+    if (files?.resume && files.resume[0]) {
+      if (existingUser?.resume) {
+        deleteFile(existingUser.resume);
+      }
+
+      const resumeFile = files.resume[0];
+      safeData.resume = `/uploads/${resumeFile.filename}`;
+    }
+
     const userUpdate = await prisma.user.update({
       where: { id: userId },
       data: safeData,
     });
 
     if (Array.isArray(education)) {
-      await prisma.education.deleteMany({
-        where: { userId },
-      });
+      await prisma.education.deleteMany({ where: { userId } });
 
       for (const edu of education) {
         await prisma.education.create({
-          data: {
-            ...edu,
-            userId,
-          },
+          data: { ...edu, userId },
         });
       }
     }
@@ -194,6 +224,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<Respon
       user: updatedUser,
       message: "Profile updated successfully",
     });
+
   } catch (error) {
     console.error("Update failed:", error);
     return res.status(500).json({ message: "Update failed", error });

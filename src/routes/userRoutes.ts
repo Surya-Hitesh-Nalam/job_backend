@@ -31,6 +31,9 @@ router.get("/userDashboard", protect, asyncHandler(getAdminDashboard));
 router.get("/", protect, isAdmin, asyncHandler(getAllUsers));
 router.post("/logout", protect, asyncHandler(logout));  
 router.get("/profile", protect, asyncHandler(getProfile));  
-router.put("/update-profile", protect, upload.single('profilePic'),asyncHandler(updateProfile));
+router.put("/update-profile", protect,upload.fields([
+    { name: 'profilePic', maxCount: 1 },
+    { name: 'resume', maxCount: 1 },
+  ]),asyncHandler(updateProfile));
 
 export default router;
