@@ -31,11 +31,24 @@ export const createJob = async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File | undefined;
     const logoUrl = file ? `/uploads/${file.filename}` : null;
 
-    const passingYearsArray = Array.isArray(allowedPassingYears)
-      ? allowedPassingYears.map((y: string) => Number(y))
-      : allowedPassingYears
-      ? [Number(allowedPassingYears)]
-      : [];
+    const parsedAllowedBranches = Array.isArray(allowedBranches)
+  ? allowedBranches
+  : allowedBranches
+  ? allowedBranches.split(',').map((branch: string) => branch.trim())
+  : [];
+
+const parsedAllowedPassingYears = Array.isArray(allowedPassingYears)
+  ? allowedPassingYears.map((year: string | number) => Number(year))
+  : allowedPassingYears
+  ? allowedPassingYears.split(',').map((year: string) => Number(year.trim()))
+  : [];
+
+const parsedRounds = typeof rounds === 'string'
+  ? JSON.parse(rounds)
+  : Array.isArray(rounds)
+    ? rounds
+    : [];
+
 
     const job = await prisma.job.create({
       data: {
@@ -52,19 +65,17 @@ export const createJob = async (req: Request, res: Response) => {
         companyWebsite,
         companyEmail,
         companyPhone,
-        allowedBranches,
-        allowedPassingYears: passingYearsArray,
+        allowedBranches: parsedAllowedBranches,
+        allowedPassingYears: parsedAllowedPassingYears,
         lastDateToApply: lastDateToApply ? new Date(lastDateToApply) : null,
-        rounds: {
-          create: Array.isArray(rounds)
-            ? rounds.map((r: any) => ({
-                roundNumber: r.roundNumber,
-                roundName: r.roundName,
-                description: r.description,
-              }))
-            : [],
-        },
-      },
+            rounds: {
+      create: parsedRounds.map((r: any) => ({
+        roundNumber: Number(r.roundNumber),
+        roundName: r.roundName,
+        description: r.description,
+      })),
+    },
+  },
       include: {
         rounds: true,
       },
@@ -76,10 +87,10 @@ export const createJob = async (req: Request, res: Response) => {
         education: {
           some: {
             specialization: {
-              in: allowedBranches,  
+              in: parsedAllowedBranches,  
             },
             passedOutYear: {
-              in: passingYearsArray,  
+              in: parsedAllowedPassingYears,  
             },
           },
         },
