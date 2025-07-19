@@ -216,6 +216,7 @@ export const updateJob = async (req: Request, res: Response) => {
     console.error('Update job error:', err);
     res.status(500).json({ message: 'Failed to update job', error: err });
   }
+};
 
 export const deleteJob = async (req: Request, res: Response) => {
   try {
@@ -226,4 +227,4 @@ export const deleteJob = async (req: Request, res: Response) => {
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete job', error: err });
   }
-};
+}
