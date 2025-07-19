@@ -19,7 +19,7 @@ model User {
   username     String?          @unique @db.VarChar(255)
   email        String           @unique @db.VarChar(255)
   password     String           @db.VarChar(255)
-  gender       String?        @db.VarChar(100)
+  gender       String?          @db.VarChar(100)
   token        String?          @db.VarChar(255)
   isVerified   Boolean          @default(false)
   otp          String?          @db.VarChar(10)

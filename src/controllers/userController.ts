@@ -199,12 +199,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<Respon
       const resumeFile = files.resume[0];
       safeData.resume = `/uploads/${resumeFile.filename}`;
     }
-
-    const userUpdate = await prisma.user.update({
-      where: { id: userId },
-      data: safeData,
-    });
-
+    
     if (Array.isArray(education)) {
       await prisma.education.deleteMany({ where: { userId } });
 

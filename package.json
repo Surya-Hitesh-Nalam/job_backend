@@ -3,41 +3,34 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.ts"
+    "dev": "tsx watch src/index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Simple yet complex api for jobs management",
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.0.4",
     "@types/nodemailer": "^6.4.17",
     "prisma": "^6.10.1",
-    "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
     "@prisma/client": "^6.10.1",
-    "@sendgrid/mail": "^8.1.5",
-    "@types/cookie-parser": "^1.4.9",
-    "@types/cors": "^2.8.19",
     "argon2": "^0.43.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.0.0",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
-    "install": "^0.13.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "nodemailer": "^7.0.4",
-    "nodemon": "^3.1.10",
-    "npm": "^10.9.3",
-    "pg": "^8.16.2",
     "resend": "^4.6.0"
   }
 }
