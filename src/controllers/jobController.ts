@@ -18,7 +18,7 @@ export const createJob = async (req: Request, res: Response) => {
       jobRole,
       jobType,
       companyName,
-      companyLogo,
+
       companyWebsite,
       companyEmail,
       companyPhone,
@@ -26,8 +26,13 @@ export const createJob = async (req: Request, res: Response) => {
       allowedBranches,
       allowedPassingYears,
     } = req.body;
-    const file = companyLogo as Express.Multer.File;
-    let url = `/uploads/${file.filename}`;
+    const file = req.file as Express.Multer.File | undefined;
+    const logoUrl = file ? `/uploads/${file.filename}` : null;
+
+    console.log(`Allowed branches type: ${typeof allowedBranches}`);
+    console.log(`Allowed passing years type: ${typeof allowedPassingYears}`);
+    console.log(`Allowed passing years: ${allowedPassingYears}`);
+    console.log(`Allowed branches: ${allowedBranches}`);
 
     const job = await prisma.job.create({
       data: {
@@ -40,12 +45,16 @@ export const createJob = async (req: Request, res: Response) => {
         jobRole,
         jobType,
         companyName,
-        companyLogo: file ? url : null,
+        companyLogo: logoUrl,
         companyWebsite,
         companyEmail,
         companyPhone,
         allowedBranches,
-        allowedPassingYears,
+        allowedPassingYears: Array.isArray(allowedPassingYears)
+          ? allowedPassingYears.map((y: string) => Number(y))
+          : allowedPassingYears
+          ? [Number(allowedPassingYears)]
+          : [],
         lastDateToApply: lastDateToApply ? new Date(lastDateToApply) : null,
         rounds: {
           create: Array.isArray(rounds)
@@ -207,7 +216,6 @@ export const updateJob = async (req: Request, res: Response) => {
     console.error('Update job error:', err);
     res.status(500).json({ message: 'Failed to update job', error: err });
   }
-};
 
 export const deleteJob = async (req: Request, res: Response) => {
   try {
