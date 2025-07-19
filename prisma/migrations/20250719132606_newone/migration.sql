@@ -4,15 +4,18 @@ CREATE TYPE "Role" AS ENUM ('ADMIN', 'USER');
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
-    "userName" VARCHAR(255),
+    "username" VARCHAR(255),
     "email" VARCHAR(255) NOT NULL,
     "password" VARCHAR(255) NOT NULL,
+    "gender" VARCHAR(100),
     "token" VARCHAR(255),
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
     "otp" VARCHAR(10),
     "otpExpiry" TIMESTAMP(3),
     "firstName" VARCHAR(255),
     "lastName" VARCHAR(255),
+    "collegeId" VARCHAR(100),
+    "dateOfBirth" TIMESTAMP(3),
     "phoneNumber" VARCHAR(20),
     "address" VARCHAR(255),
     "fatherName" VARCHAR(255),
@@ -32,12 +35,13 @@ CREATE TABLE "Education" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "educationalLevel" VARCHAR(50) NOT NULL,
-    "schoolOrCollege" VARCHAR(255) NOT NULL,
+    "institution" VARCHAR(255) NOT NULL,
     "specialization" VARCHAR(255),
     "boardOrUniversity" VARCHAR(255),
     "percentage" DOUBLE PRECISION NOT NULL,
     "passedOutYear" INTEGER NOT NULL,
     "location" VARCHAR(255),
+    "noOfActiveBacklogs" INTEGER DEFAULT 0,
 
     CONSTRAINT "Education_pkey" PRIMARY KEY ("id")
 );
@@ -60,6 +64,8 @@ CREATE TABLE "Job" (
     "companyEmail" VARCHAR(255),
     "companyPhone" VARCHAR(50),
     "lastDateToApply" TIMESTAMP(3),
+    "allowedBranches" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "allowedPassingYears" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
 
     CONSTRAINT "Job_pkey" PRIMARY KEY ("id")
 );
@@ -100,6 +106,9 @@ CREATE TABLE "Results" (
 
     CONSTRAINT "Results_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");

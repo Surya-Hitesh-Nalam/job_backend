@@ -27,6 +27,8 @@ model User {
 
   firstName    String?          @db.VarChar(255)
   lastName     String?          @db.VarChar(255)
+  collegeId    String?          @db.VarChar(100)
+  dateOfBirth  DateTime?
   phoneNumber  String?          @db.VarChar(20)
   address      String?          @db.VarChar(255)
   fatherName   String?          @db.VarChar(255)

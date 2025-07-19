@@ -1,9 +1,5 @@
 import nodemailer from 'nodemailer';
 
-console.log('=== EMAIL CONFIG DEBUG ===');
-console.log('EMAIL_USER:', process.env.EMAIL_USER);
-console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '***SET***' : 'NOT SET');
-
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
@@ -115,3 +111,37 @@ export const sendJobApplicationEmail = async (
     throw new Error('Email sending failed');
   }
 };
+
+export const sendJobPostedEmail = async (
+  to: string,
+  userName: string,
+  jobTitle: string,
+  companyName: string,
+  jobDescription: string,
+  lastDateToApply: string
+): Promise<void> => {
+  const message = `
+    <p>Hi <b>${userName}</b>,</p>
+    <p>A new job opportunity is available for you!</p>
+    <p><b>Position:</b> ${jobTitle}</p>
+    <p><b>Company:</b> ${companyName}</p>
+    <p><b>Description:</b> ${jobDescription}</p>
+    <p><b>Last Date to Apply:</b> ${lastDateToApply}</p>
+    <p>Visit your job portal now and apply before the deadline!</p>
+    <br/>
+    <p>Best wishes,<br/>${companyName} Recruitment Team</p>
+  `;
+
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to,
+      subject: `New Job Posted: ${jobTitle} at ${companyName}`,
+      html: message,
+    });
+    console.log(`✅ Job notification email sent to ${to}:`, info.messageId);
+  } catch (error) {
+    console.error(`❌ Failed to send job notification to ${to}:`, error);
+  }
+};
+

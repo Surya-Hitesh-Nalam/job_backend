@@ -5,6 +5,8 @@ import fs from 'fs';
 
 const prisma = new PrismaClient();
 
+import { sendJobPostedEmail } from '../utils/email'; 
+
 export const createJob = async (req: Request, res: Response) => {
   try {
     const {
@@ -18,7 +20,6 @@ export const createJob = async (req: Request, res: Response) => {
       jobRole,
       jobType,
       companyName,
-
       companyWebsite,
       companyEmail,
       companyPhone,
@@ -26,13 +27,15 @@ export const createJob = async (req: Request, res: Response) => {
       allowedBranches,
       allowedPassingYears,
     } = req.body;
+
     const file = req.file as Express.Multer.File | undefined;
     const logoUrl = file ? `/uploads/${file.filename}` : null;
 
-    console.log(`Allowed branches type: ${typeof allowedBranches}`);
-    console.log(`Allowed passing years type: ${typeof allowedPassingYears}`);
-    console.log(`Allowed passing years: ${allowedPassingYears}`);
-    console.log(`Allowed branches: ${allowedBranches}`);
+    const passingYearsArray = Array.isArray(allowedPassingYears)
+      ? allowedPassingYears.map((y: string) => Number(y))
+      : allowedPassingYears
+      ? [Number(allowedPassingYears)]
+      : [];
 
     const job = await prisma.job.create({
       data: {
@@ -50,11 +53,7 @@ export const createJob = async (req: Request, res: Response) => {
         companyEmail,
         companyPhone,
         allowedBranches,
-        allowedPassingYears: Array.isArray(allowedPassingYears)
-          ? allowedPassingYears.map((y: string) => Number(y))
-          : allowedPassingYears
-          ? [Number(allowedPassingYears)]
-          : [],
+        allowedPassingYears: passingYearsArray,
         lastDateToApply: lastDateToApply ? new Date(lastDateToApply) : null,
         rounds: {
           create: Array.isArray(rounds)
@@ -71,12 +70,51 @@ export const createJob = async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(201).json({ message: 'Job created', job });
+    const eligibleUsers = await prisma.user.findMany({
+      where: {
+        role: 'USER',
+        education: {
+          some: {
+            specialization: {
+              in: allowedBranches,  
+            },
+            passedOutYear: {
+              in: passingYearsArray,  
+            },
+          },
+        },
+      },
+      include: {
+        education: true,
+      },
+    });
+
+    console.log(`Found ${eligibleUsers.length} eligible users.`);
+
+    for (const user of eligibleUsers) {
+      await sendJobPostedEmail(
+        user.email,
+        user.firstName || user.username || 'Student',
+        jobTitle,
+        companyName,
+        jobDescription,
+        lastDateToApply ? new Date(lastDateToApply).toDateString() : 'N/A'
+      );
+    }
+
+    console.log(`Emails sent to ${eligibleUsers.length} eligible users.`);
+
+    return res.status(201).json({
+      message: 'Job created and notifications sent to eligible students.',
+      job,
+    });
+
   } catch (err) {
     console.error('Create job error:', err);
     return res.status(500).json({ message: 'Failed to create job', error: err });
   }
 };
+
 
 export const getAllJobs = async (_req: Request, res: Response) => {
   try {
