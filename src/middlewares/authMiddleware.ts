@@ -1,26 +1,26 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { RequestHandler } from "express";
-import jwt from "jsonwebtoken";
+import { RequestHandler } from 'express';
+import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET environment variable is not defined");
+  throw new Error('JWT_SECRET environment variable is not defined');
 }
 
 export const protect: RequestHandler = (req, res, next) => {
   try {
-    let token = req.headers.authorization?.split(" ")[1];
-    
+    let token = req.headers.authorization?.split(' ')[1];
+
     if (!token) {
       token = req.cookies?.auth_token;
     }
-    
+
     if (!token) {
-      res.status(401).json({ 
-        message: "Access denied. No token provided.",
-        requiresLogin: true 
+      res.status(401).json({
+        message: 'Access denied. No token provided.',
+        requiresLogin: true,
       });
       return;
     }
@@ -34,23 +34,23 @@ export const protect: RequestHandler = (req, res, next) => {
       res.clearCookie('auth_token', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        sameSite: 'strict',
       });
-      
-      res.status(401).json({ 
-        message: "Token expired. Please login again.",
+
+      res.status(401).json({
+        message: 'Token expired. Please login again.',
         requiresLogin: true,
-        tokenExpired: true
+        tokenExpired: true,
       });
     } else if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({ 
-        message: "Invalid token. Please login again.",
-        requiresLogin: true
+      res.status(401).json({
+        message: 'Invalid token. Please login again.',
+        requiresLogin: true,
       });
     } else {
-      res.status(401).json({ 
-        message: "Authentication failed",
-        requiresLogin: true
+      res.status(401).json({
+        message: 'Authentication failed',
+        requiresLogin: true,
       });
     }
     return;

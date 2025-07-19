@@ -1,8 +1,8 @@
 import nodemailer from 'nodemailer';
 
-console.log("=== EMAIL CONFIG DEBUG ===");
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "***SET***" : "NOT SET");
+console.log('=== EMAIL CONFIG DEBUG ===');
+console.log('EMAIL_USER:', process.env.EMAIL_USER);
+console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '***SET***' : 'NOT SET');
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
@@ -10,8 +10,8 @@ const transporter = nodemailer.createTransport({
   secure: true,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 // Test the connection on startup
@@ -28,25 +28,24 @@ interface TransporterVerifyCallback {
 });
 
 export const sendOtpEmail = async (to: string, otp: string): Promise<void> => {
-  console.log("=== SEND OTP EMAIL DEBUG ===");
-  console.log("Sending to:", to);
-  console.log("OTP:", otp);
-  console.log("From:", process.env.EMAIL_USER);
-  
+  console.log('=== SEND OTP EMAIL DEBUG ===');
+  console.log('Sending to:', to);
+  console.log('OTP:', otp);
+  console.log('From:', process.env.EMAIL_USER);
+
   try {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to,
       subject: 'OTP Verification',
-      html: `<p>Your OTP is <b>${otp}</b>. It is valid for 10 minutes.</p>`
+      html: `<p>Your OTP is <b>${otp}</b>. It is valid for 10 minutes.</p>`,
     };
-    
-    console.log("Mail options:", mailOptions);
-    
+
+    console.log('Mail options:', mailOptions);
+
     const info = await transporter.sendMail(mailOptions);
     console.log('✅ OTP email sent successfully:', info.messageId);
     console.log('Email info:', info);
-    
   } catch (error) {
     console.error('❌ Failed to send OTP email:', error);
     if (typeof error === 'object' && error !== null) {
@@ -56,14 +55,18 @@ export const sendOtpEmail = async (to: string, otp: string): Promise<void> => {
         code: err.code,
         command: err.command,
         response: err.response,
-        responseCode: err.responseCode
+        responseCode: err.responseCode,
       });
     }
     throw error;
   }
 };
 
-export const sendRoundResultEmail = async (to: string, roundName: string, status: string): Promise<void> => {
+export const sendRoundResultEmail = async (
+  to: string,
+  roundName: string,
+  status: string
+): Promise<void> => {
   const message =
     status === 'Qualified'
       ? `<p>🎉 Congratulations! You have <b>qualified</b> the <b>${roundName}</b> round.</p><p>Stay tuned for the next round instructions.</p>`
@@ -74,7 +77,7 @@ export const sendRoundResultEmail = async (to: string, roundName: string, status
       from: process.env.EMAIL_USER,
       to,
       subject: `Round Result: ${roundName}`,
-      html: message
+      html: message,
     });
     console.log('Round result email sent successfully:', info.messageId);
   } catch (error) {
@@ -104,7 +107,7 @@ export const sendJobApplicationEmail = async (
       from: process.env.EMAIL_USER,
       to,
       subject: `Application Confirmation: ${jobTitle} at ${companyName}`,
-      html: message
+      html: message,
     });
     console.log('Job application email sent successfully:', info.messageId);
   } catch (error) {

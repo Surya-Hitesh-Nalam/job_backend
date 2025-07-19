@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import path from "path";
-import fs from "fs";
+import { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+import path from 'path';
+import fs from 'fs';
 
 const prisma = new PrismaClient();
 
@@ -62,12 +62,10 @@ export const createJob = async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(201).json({ message: "Job created", job });
+    return res.status(201).json({ message: 'Job created', job });
   } catch (err) {
-    console.error("Create job error:", err);
-    return res
-      .status(500)
-      .json({ message: "Failed to create job", error: err });
+    console.error('Create job error:', err);
+    return res.status(500).json({ message: 'Failed to create job', error: err });
   }
 };
 
@@ -76,14 +74,14 @@ export const getAllJobs = async (_req: Request, res: Response) => {
     const jobs = await prisma.job.findMany({
       include: {
         rounds: {
-          orderBy: { roundNumber: "asc" },
+          orderBy: { roundNumber: 'asc' },
         },
       },
-      orderBy: { postedDate: "desc" },
+      orderBy: { postedDate: 'desc' },
     });
     res.json(jobs);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch jobs", error: err });
+    res.status(500).json({ message: 'Failed to fetch jobs', error: err });
   }
 };
 
@@ -93,29 +91,29 @@ export const getJobById = async (req: Request, res: Response) => {
       where: { id: req.params.id },
       include: {
         rounds: {
-          orderBy: { roundNumber: "asc" },
+          orderBy: { roundNumber: 'asc' },
         },
       },
     });
 
     if (!job) {
-      return res.status(404).json({ message: "Job not found" });
+      return res.status(404).json({ message: 'Job not found' });
     }
 
     res.json(job);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch job", error: err });
+    res.status(500).json({ message: 'Failed to fetch job', error: err });
   }
 };
 
 const deleteFile = (relativeFilePath: string) => {
   if (!relativeFilePath) return;
 
-  const cleanPath = relativeFilePath.startsWith("/")
+  const cleanPath = relativeFilePath.startsWith('/')
     ? relativeFilePath.substring(1)
     : relativeFilePath;
 
-  const absolutePath = path.resolve(__dirname, "../../", cleanPath);
+  const absolutePath = path.resolve(__dirname, '../../', cleanPath);
 
   if (fs.existsSync(absolutePath)) {
     fs.unlinkSync(absolutePath);
@@ -131,7 +129,7 @@ export const updateJob = async (req: Request, res: Response) => {
     const existingJob = await prisma.job.findUnique({ where: { id: jobId } });
 
     if (!existingJob) {
-      return res.status(404).json({ message: "Job not found" });
+      return res.status(404).json({ message: 'Job not found' });
     }
 
     const updatedData: any = {
@@ -198,16 +196,16 @@ export const updateJob = async (req: Request, res: Response) => {
 
     const jobWithUpdatedRounds = await prisma.job.findUnique({
       where: { id: jobId },
-      include: { rounds: { orderBy: { roundNumber: "asc" } } },
+      include: { rounds: { orderBy: { roundNumber: 'asc' } } },
     });
 
     return res.json({
-      message: "Job and rounds updated successfully",
+      message: 'Job and rounds updated successfully',
       job: jobWithUpdatedRounds,
     });
   } catch (err) {
-    console.error("Update job error:", err);
-    res.status(500).json({ message: "Failed to update job", error: err });
+    console.error('Update job error:', err);
+    res.status(500).json({ message: 'Failed to update job', error: err });
   }
 };
 
@@ -216,8 +214,8 @@ export const deleteJob = async (req: Request, res: Response) => {
     await prisma.job.delete({
       where: { id: req.params.id },
     });
-    res.json({ message: "Job deleted" });
+    res.json({ message: 'Job deleted' });
   } catch (err) {
-    res.status(500).json({ message: "Failed to delete job", error: err });
+    res.status(500).json({ message: 'Failed to delete job', error: err });
   }
 };

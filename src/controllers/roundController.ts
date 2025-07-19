@@ -1,10 +1,10 @@
-import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import ExcelJS from "exceljs";
+import { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+import ExcelJS from 'exceljs';
 
 const prisma = new PrismaClient();
 
-import { sendRoundResultEmail } from "../utils/email";
+import { sendRoundResultEmail } from '../utils/email';
 
 export const uploadRoundResults = async (req: Request, res: Response) => {
   const { jobId, roundName, users, status } = req.body;
@@ -14,7 +14,7 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
 
     for (const username of users) {
       const user = await prisma.user.findUnique({
-        where: { username: username }, 
+        where: { username: username },
       });
 
       if (!user) {
@@ -23,7 +23,7 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
       }
 
       const round = await prisma.round.findFirst({
-        where: { jobId, roundName }
+        where: { jobId, roundName },
       });
 
       if (!round) {
@@ -51,29 +51,28 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
     }
 
     return res.json({
-      message: "Round results recorded and emails sent.",
+      message: 'Round results recorded and emails sent.',
       skippedUsers: notFoundUsers.length > 0 ? notFoundUsers : undefined,
     });
   } catch (error) {
-    console.error("Upload failed:", error);
-    return res.status(500).json({ message: "Error uploading round results", error });
+    console.error('Upload failed:', error);
+    return res.status(500).json({ message: 'Error uploading round results', error });
   }
 };
 
-
 export const getUserRoundResults = async (req: Request, res: Response) => {
-  const userId = req.params.userId; 
+  const userId = req.params.userId;
 
   try {
     const results = await prisma.results.findMany({
       where: { userId },
       include: { job: true },
-      orderBy: { timestamp: "desc" },
+      orderBy: { timestamp: 'desc' },
     });
 
     res.json({ rounds: results });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch user rounds", error });
+    res.status(500).json({ message: 'Failed to fetch user rounds', error });
   }
 };
 
@@ -86,16 +85,13 @@ export const getJobRoundSummary = async (req: Request, res: Response) => {
       include: {
         user: true,
       },
-      orderBy: [
-        { roundName: "asc" },
-        { timestamp: "desc" }
-      ],
+      orderBy: [{ roundName: 'asc' }, { timestamp: 'desc' }],
     });
 
     res.json({ rounds });
   } catch (error) {
-    console.error("Error fetching round summary:", error);
-    res.status(500).json({ message: "Failed to fetch job round summary", error });
+    console.error('Error fetching round summary:', error);
+    res.status(500).json({ message: 'Failed to fetch job round summary', error });
   }
 };
 
@@ -113,21 +109,20 @@ export const getSpecificRoundResults = async (req: Request, res: Response) => {
         job: true,
       },
       orderBy: {
-        timestamp: "desc",
+        timestamp: 'desc',
       },
     });
 
     if (!results || results.length === 0) {
-      return res.status(404).json({ message: "No results found for the specified round." });
+      return res.status(404).json({ message: 'No results found for the specified round.' });
     }
 
     res.json({ roundResults: results });
   } catch (error) {
-    console.error("Error fetching round-specific results:", error);
-    res.status(500).json({ message: "Failed to fetch specific round results", error });
+    console.error('Error fetching round-specific results:', error);
+    res.status(500).json({ message: 'Failed to fetch specific round results', error });
   }
 };
-
 
 export const exportRoundResults = async (req: Request, res: Response) => {
   try {
@@ -152,25 +147,25 @@ export const exportRoundResults = async (req: Request, res: Response) => {
         job: true,
       },
       orderBy: {
-        timestamp: "desc",
+        timestamp: 'desc',
       },
     });
 
     const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("Round Results");
+    const sheet = workbook.addWorksheet('Round Results');
 
     sheet.columns = [
-      { header: "Username", key: "userName", width: 20 },
-      { header: "Full Name", key: "fullName", width: 25 },
-      { header: "Email", key: "email", width: 25 },
-      { header: "Job Title", key: "jobTitle", width: 30 },
-      { header: "Round Name", key: "roundName", width: 20 },
-      { header: "Status", key: "status", width: 15 },
-      { header: "Timestamp", key: "timestamp", width: 25 },
+      { header: 'Username', key: 'userName', width: 20 },
+      { header: 'Full Name', key: 'fullName', width: 25 },
+      { header: 'Email', key: 'email', width: 25 },
+      { header: 'Job Title', key: 'jobTitle', width: 30 },
+      { header: 'Round Name', key: 'roundName', width: 20 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Timestamp', key: 'timestamp', width: 25 },
     ];
 
-    results.forEach((res) => {
-      const fullName = `${res.user?.firstName || ""} ${res.user?.lastName || ""}`.trim();
+    results.forEach(res => {
+      const fullName = `${res.user?.firstName || ''} ${res.user?.lastName || ''}`.trim();
       sheet.addRow({
         userName: res.user?.username,
         fullName,
@@ -183,15 +178,15 @@ export const exportRoundResults = async (req: Request, res: Response) => {
     });
 
     res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     );
-    res.setHeader("Content-Disposition", "attachment; filename=round_results.xlsx");
+    res.setHeader('Content-Disposition', 'attachment; filename=round_results.xlsx');
 
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
-    console.error("Excel export failed:", error);
-    res.status(500).json({ message: "Failed to export round results", error });
+    console.error('Excel export failed:', error);
+    res.status(500).json({ message: 'Failed to export round results', error });
   }
 };
