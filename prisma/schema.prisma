@@ -44,6 +44,7 @@ model User {
   education    Education[]
   applications JobApplication[]
   roundResults Results[]
+  jobsCreated Job[] 
 }
 
 
@@ -81,15 +82,18 @@ model Job {
   companyEmail   String?          @db.VarChar(255)
   companyPhone   String?          @db.VarChar(50)
   applications   JobApplication[] 
-  rounds      Round[]
-  roundResults Results[] 
+  rounds         Round[]
+  roundResults   Results[] 
 
   lastDateToApply DateTime?
 
   allowedBranches     String[]     @default([])
   allowedPassingYears Int[]        @default([])
 
+  createdById    String          
+  createdBy      User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
 }
+
 
 enum Role {
   ADMIN

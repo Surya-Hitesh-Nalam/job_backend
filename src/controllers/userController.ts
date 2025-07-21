@@ -155,47 +155,74 @@ const deleteFile = (relativeFilePath: string) => {
 };
 
 export const updateProfile = async (req: Request, res: Response): Promise<Response> => {
-  console.log('updateProfile controller hit');
+  console.log("updateProfile controller hit");
 
   try {
     const userId = (req as any).user?.id as string;
 
-    const { password, otp, otpExpiry, education, ...safeData } = req.body;
+    const {
+      password,
+      otp,
+      otpExpiry,
+      education: rawEducation,
+      dateOfBirth,
+      passedOutYear,
+      noOfActiveBacklogs,
+      percentage,
+      ...rest
+    } = req.body;
+
+    const safeData: any = {
+      ...rest,
+    };
+
+    // ✅ Parse required types from strings
+    if (percentage) safeData.percentage = parseFloat(percentage);
+    if (noOfActiveBacklogs) safeData.noOfActiveBacklogs = parseInt(noOfActiveBacklogs);
+    if (passedOutYear) safeData.passedOutYear = parseInt(passedOutYear);
+    if (dateOfBirth) safeData.dateOfBirth = new Date(dateOfBirth);
 
     const files = req.files as {
       [fieldname: string]: Express.Multer.File[];
     };
 
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+
+    // ✅ Handle Profile Picture
+    if (files?.profilePic?.[0]) {
+      if (existingUser?.profilePic) deleteFile(existingUser.profilePic);
+      safeData.profilePic = `/uploads/${files.profilePic[0].filename}`;
+    }
+
+    // ✅ Handle Resume Upload
+    if (files?.resume?.[0]) {
+      if (existingUser?.resume) deleteFile(existingUser.resume);
+      safeData.resume = `/uploads/${files.resume[0].filename}`;
+    }
+
+    // ✅ Update user data
+    await prisma.user.update({
       where: { id: userId },
+      data: safeData,
     });
 
-    if (files?.profilePic && files.profilePic[0]) {
-      if (existingUser?.profilePic) {
-        deleteFile(existingUser.profilePic);
-      }
+    // ✅ Handle Education (all strings, parse properly)
+    if (rawEducation && Array.isArray(rawEducation)) {
+      const parsedEducation = rawEducation.map((edu: any) => ({
+        educationalLevel: edu.educationalLevel,
+        institution: edu.institution,
+        specialization: edu.specialization || null,
+        boardOrUniversity: edu.boardOrUniversity || null,
+        location: edu.location || null,
+        percentage: parseFloat(edu.percentage),
+        passedOutYear: parseInt(edu.passedOutYear),
+        noOfActiveBacklogs: edu.noOfActiveBacklogs ? parseInt(edu.noOfActiveBacklogs) : 0,
+        userId,
+      }));
 
-      const profilePicFile = files.profilePic[0];
-      safeData.profilePic = `/uploads/${profilePicFile.filename}`;
-    }
-
-    if (files?.resume && files.resume[0]) {
-      if (existingUser?.resume) {
-        deleteFile(existingUser.resume);
-      }
-
-      const resumeFile = files.resume[0];
-      safeData.resume = `/uploads/${resumeFile.filename}`;
-    }
-
-    if (Array.isArray(education)) {
+      // Replace old education
       await prisma.education.deleteMany({ where: { userId } });
-
-      for (const edu of education) {
-        await prisma.education.create({
-          data: { ...edu, userId },
-        });
-      }
+      await prisma.education.createMany({ data: parsedEducation });
     }
 
     const updatedUser = await prisma.user.findUnique({
@@ -205,11 +232,11 @@ export const updateProfile = async (req: Request, res: Response): Promise<Respon
 
     return res.json({
       user: updatedUser,
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
     });
   } catch (error) {
-    console.error('Update failed:', error);
-    return res.status(500).json({ message: 'Update failed', error });
+    console.error("Update failed:", error);
+    return res.status(500).json({ message: "Update failed", error });
   }
 };
 
