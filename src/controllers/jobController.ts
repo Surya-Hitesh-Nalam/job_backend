@@ -208,7 +208,6 @@ export const updateJob = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Job not found' });
     }
 
-    // Parse inputs
     const parsedSkillsRequired = Array.isArray(skillsRequired)
       ? skillsRequired
       : skillsRequired
@@ -260,13 +259,11 @@ export const updateJob = async (req: Request, res: Response) => {
       updatedData.companyLogo = `/uploads/${file.filename}`;
     }
 
-    // Update job
     await prisma.job.update({
       where: { id: jobId },
       data: updatedData,
     });
 
-    // Update or create rounds
     if (Array.isArray(parsedRounds)) {
       for (const round of parsedRounds) {
         const { roundNumber, roundName, description } = round;

@@ -7,12 +7,21 @@ import jobRoutes from './routes/jobRoutes';
 import cors from 'cors';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
+import swaggerAutogen from 'swagger-autogen';
+import swaggerUi from "swagger-ui-express" 
+import swaggerDocument from './swagger-output.json';
+
 
 dotenv.config();
 
 const prisma = new PrismaClient();
 
+
+
+
 const app = express();
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(
   cors({

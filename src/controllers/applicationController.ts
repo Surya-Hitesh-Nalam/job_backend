@@ -112,7 +112,9 @@ export const getApplicationsForJob = async (req: Request, res: Response) => {
     const applications = await prisma.jobApplication.findMany({
       where: { jobId },
       include: {
-        user: true,
+        user: {
+          include:{education:true},
+        },
       },
       orderBy: { appliedAt: 'desc' },
     });
@@ -157,10 +159,10 @@ export const exportApplicationsExcel = async (req: Request, res: Response) => {
       { header: 'Username', key: 'userName', width: 20 },
       { header: 'Email', key: 'email', width: 30 },
       { header: 'Phone', key: 'phoneNumber', width: 20 },
+      { header:'Gender', key:'gender',width:7},
+      { header: 'CollegeId', key:'collegeId',width:20},
       { header: 'Resume', key: 'resume', width: 40 },
       { header: 'City', key: 'city', width: 20 },
-      { header: 'State', key: 'state', width: 20 },
-      { header: 'Country', key: 'country', width: 20 },
       { header: 'Applied At', key: 'appliedAt', width: 25 },
     ];
 
@@ -178,12 +180,12 @@ export const exportApplicationsExcel = async (req: Request, res: Response) => {
       const rowData: any = {
         name: `${u.firstName || ''} ${u.lastName || ''}`.trim(),
         userName: u.username,
+        collegeId:u.collegeId,
         email: u.email,
+        gender:u.gender,
         phoneNumber: u.phoneNumber || 'N/A',
         resume: u.resume || 'N/A',
         city: u.city || '',
-        state: u.state || '',
-        country: u.country || '',
         appliedAt: app.appliedAt.toLocaleString(),
       };
 
