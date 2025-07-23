@@ -117,6 +117,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "esModuleInterop": true,
+     "resolveJsonModule": true,
     "strict": true,
     "lib": ["esnext"]
   }
