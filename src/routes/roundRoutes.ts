@@ -8,6 +8,8 @@ import {
   exportRoundResults,
   getSpecificRoundResults,
   deleteRound,
+  bulkDeleteUsersFromRound,
+  updateRoundResults,
 } from '../controllers/roundController';
 
 const router = express.Router();
@@ -23,5 +25,6 @@ router.get('/job/:jobId', protect, isAdmin, getJobRoundSummary);
 router.get('/results/:jobId/:roundName', protect, asyncHandler(getSpecificRoundResults));
 router.get('/export', exportRoundResults);
 router.delete('/:roundId',protect,isAdmin,asyncHandler(deleteRound))
-
+router.delete('/results/:jobId/:roundName/users', asyncHandler(bulkDeleteUsersFromRound));
+router.put('/results/:jobId/:roundName', asyncHandler(updateRoundResults));
 export default router;
