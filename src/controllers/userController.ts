@@ -271,15 +271,12 @@ const safeUser = (user: any) => {
 
 export const getAllUsers = async (req: Request, res: Response): Promise<Response> => {
   try {
-    // Parse pagination query parameters
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    // Fetch total user count
     const totalUsers = await prisma.user.count();
 
-    // Fetch paginated users
     const users = await prisma.user.findMany({
       skip,
       take: limit,
@@ -320,19 +317,17 @@ export const getAdminDashboard = async (_req: Request, res: Response) => {
       prisma.user.count(),
       prisma.results.count({ where: { status: 'Qualified' } }),
 
-      // User roles breakdown (e.g., CANDIDATE, RECRUITER)
       prisma.user.groupBy({
         by: ['role'],
         _count: { _all: true },
       }),
 
-      // Group by B.Tech specializations
       prisma.education.groupBy({
         by: ['specialization'],
         where: {
           educationalLevel: 'B.Tech',
           specialization: {
-            not: null, // Avoid counting null specializations
+            not: null, 
           },
         },
         _count: {
@@ -340,7 +335,6 @@ export const getAdminDashboard = async (_req: Request, res: Response) => {
         },
       }),
 
-      // Job-wise summary
       prisma.job.findMany({
         select: {
           id: true,
@@ -360,7 +354,6 @@ export const getAdminDashboard = async (_req: Request, res: Response) => {
         },
       }),
 
-      // Top jobs by application count
       prisma.job.findMany({
         orderBy: {
           applications: {
@@ -386,8 +379,8 @@ export const getAdminDashboard = async (_req: Request, res: Response) => {
         totalApplications,
         totalUsers,
         totalQualified,
-        userRoles, // [{ role: 'CANDIDATE', _count: { _all: 50 } }, ...]
-        btechSpecializations, // [{ specialization: 'CSE', _count: { specialization: 12 } }, ...]
+        userRoles, 
+        btechSpecializations, 
         jobSummaries,
         topJobs,
       },
@@ -397,3 +390,4 @@ export const getAdminDashboard = async (_req: Request, res: Response) => {
     return res.status(500).json({ message: 'Failed to load admin dashboard', error });
   }
 };
+

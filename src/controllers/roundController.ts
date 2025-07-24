@@ -190,3 +190,14 @@ export const exportRoundResults = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Failed to export round results', error });
   }
 };
+
+export const deleteRound = async(req:Request,res:Response)=>{
+  try {
+    await prisma.round.delete({
+      where:{id:req.params.id}
+    })
+    res.json({"message":"Round deleted successfully"})
+  } catch (error) {
+    res.status(500).json({"message":"Failed to delete round",error})
+  }
+}

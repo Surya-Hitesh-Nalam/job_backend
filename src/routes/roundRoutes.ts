@@ -7,6 +7,7 @@ import {
   getJobRoundSummary,
   exportRoundResults,
   getSpecificRoundResults,
+  deleteRound,
 } from '../controllers/roundController';
 
 const router = express.Router();
@@ -21,5 +22,6 @@ router.get('/user/:userId', protect, getUserRoundResults);
 router.get('/job/:jobId', protect, isAdmin, getJobRoundSummary);
 router.get('/results/:jobId/:roundName', protect, asyncHandler(getSpecificRoundResults));
 router.get('/export', exportRoundResults);
+router.delete('/:roundId',protect,isAdmin,asyncHandler(deleteRound))
 
 export default router;
