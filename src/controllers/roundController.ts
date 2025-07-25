@@ -205,7 +205,7 @@ export const deleteRound = async(req:Request,res:Response)=>{
 export const bulkDeleteUsersFromRound = async (req: Request, res: Response) => {
   try {
     const { jobId, roundName } = req.params;
-    let { usernames } = req.body; // Can be string or array
+    let { usernames } = req.body; 
 
     if (!jobId || !roundName || !usernames) {
       return res.status(400).json({ 
@@ -335,8 +335,7 @@ export const bulkDeleteUsersFromRound = async (req: Request, res: Response) => {
 export const updateRoundResults = async (req: Request, res: Response) => {
   try {
     const { jobId, roundName } = req.params;
-    let { usernames, status } = req.body; // Can be string or array
-
+    let { usernames, status } = req.body;
     if (!jobId || !roundName || !usernames || !status) {
       return res.status(400).json({ 
         message: 'Missing required parameters: jobId, roundName, usernames, and status are required' 

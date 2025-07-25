@@ -275,14 +275,80 @@ export const getAllUsers = async (req: Request, res: Response): Promise<Response
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    const totalUsers = await prisma.user.count();
+    const {
+      username,
+      gender,
+      educationLevel,
+      percentageMin,
+      percentageMax,
+      specialization,
+      maxBacklogs,
+    } = req.query;
+
+    // Basic user filter
+    const userWhere: any = {};
+
+    if (username) {
+      userWhere.OR = [
+        { username: { contains: username as string, mode: 'insensitive' } },
+        { firstName: { contains: username as string, mode: 'insensitive' } },
+        { lastName: { contains: username as string, mode: 'insensitive' } },
+        { email: { contains: username as string, mode: 'insensitive' } },
+      ];
+    }
+
+    if (gender) {
+      userWhere.gender = gender;
+    }
+
+    // Education filters
+    const educationWhere: any = {};
+
+    if (educationLevel) {
+      educationWhere.educationalLevel = educationLevel;
+    }
+
+    if (percentageMin || percentageMax) {
+      educationWhere.percentage = {};
+      if (percentageMin) {
+        educationWhere.percentage.gte = parseFloat(percentageMin as string);
+      }
+      if (percentageMax) {
+        educationWhere.percentage.lte = parseFloat(percentageMax as string);
+      }
+    }
+
+    if (specialization) {
+      educationWhere.specialization = {
+        contains: specialization as string,
+        mode: 'insensitive',
+      };
+    }
+
+    if (maxBacklogs) {
+      educationWhere.noOfActiveBacklogs = {
+        lte: parseInt(maxBacklogs as string),
+      };
+    }
+
+    const whereClause = {
+      ...userWhere,
+      education: {
+        some: educationWhere,
+      },
+    };
 
     const users = await prisma.user.findMany({
+      where: whereClause,
       skip,
       take: limit,
       include: {
         education: true,
       },
+    });
+
+    const totalUsers = await prisma.user.count({
+      where: whereClause,
     });
 
     const cleanedUsers = users.map(safeUser);
@@ -295,7 +361,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<Response
       totalPages: Math.ceil(totalUsers / limit),
     });
   } catch (error) {
-    console.error('Failed to fetch users:', error);
+    console.error('Failed to fetch users with filters:', error);
     return res.status(500).json({ message: 'Failed to fetch users', error });
   }
 };
