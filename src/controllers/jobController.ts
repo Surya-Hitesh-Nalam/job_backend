@@ -9,7 +9,7 @@ import { sendJobPostedEmail } from '../utils/email';
 
 export const createJob = async (req: Request, res: Response) => {
   try {
-    const adminId = (req as any).user?.id;
+    const adminId = (req as any)?.user?.id;
     const {
       jobTitle,
       jobDescription,
@@ -31,31 +31,33 @@ export const createJob = async (req: Request, res: Response) => {
 
     const file = req.file as Express.Multer.File | undefined;
     const logoUrl = file ? `/uploads/${file.filename}` : null;
+    console.log('ROunds:', rounds);
+    const parsedSkillsRequired = Array.isArray(skillsRequired)
+      ? skillsRequired
+      : skillsRequired
+        ? skillsRequired.split(',').map((skill: string) => skill.trim())
+        : [];
 
     const parsedAllowedBranches = Array.isArray(allowedBranches)
-  ? allowedBranches
-  : allowedBranches
-  ? allowedBranches.split(',').map((branch: string) => branch.trim())
-  : [];
+      ? allowedBranches
+      : allowedBranches
+        ? allowedBranches.split(',').map((branch: string) => branch.trim())
+        : [];
 
-const parsedAllowedPassingYears = Array.isArray(allowedPassingYears)
-  ? allowedPassingYears.map((year: string | number) => Number(year))
-  : allowedPassingYears
-  ? allowedPassingYears.split(',').map((year: string) => Number(year.trim()))
-  : [];
+    const parsedAllowedPassingYears = Array.isArray(allowedPassingYears)
+      ? allowedPassingYears.map((year: string | number) => Number(year))
+      : allowedPassingYears
+        ? allowedPassingYears.split(',').map((year: string) => Number(year.trim()))
+        : [];
 
-const parsedRounds = typeof rounds === 'string'
-  ? JSON.parse(rounds)
-  : Array.isArray(rounds)
-    ? rounds
-    : [];
-
-
+    const parsedRounds =
+      typeof rounds === 'string' ? JSON.parse(rounds) : Array.isArray(rounds) ? rounds : [];
+    console.log('Parsed Rounds:', parsedRounds);
     const job = await prisma.job.create({
       data: {
         jobTitle,
         jobDescription,
-        skillsRequired,
+        skillsRequired: parsedSkillsRequired,
         location,
         salary,
         experience,
@@ -65,19 +67,19 @@ const parsedRounds = typeof rounds === 'string'
         companyLogo: logoUrl,
         companyWebsite,
         companyEmail,
-        createdById:adminId,
         companyPhone,
+        createdById: adminId,
         allowedBranches: parsedAllowedBranches,
         allowedPassingYears: parsedAllowedPassingYears,
         lastDateToApply: lastDateToApply ? new Date(lastDateToApply) : null,
-            rounds: {
-      create: parsedRounds.map((r: any) => ({
-        roundNumber: Number(r.roundNumber),
-        roundName: r.roundName,
-        description: r.description,
-      })),
-    },
-  },
+        rounds: {
+          create: parsedRounds.map((r: any) => ({
+            roundNumber: Number(r.roundNumber),
+            roundName: r.roundName,
+            description: r.description,
+          })),
+        },
+      },
       include: {
         rounds: true,
       },
@@ -89,10 +91,10 @@ const parsedRounds = typeof rounds === 'string'
         education: {
           some: {
             specialization: {
-              in: parsedAllowedBranches,  
+              in: parsedAllowedBranches,
             },
             passedOutYear: {
-              in: parsedAllowedPassingYears,  
+              in: parsedAllowedPassingYears,
             },
           },
         },
@@ -121,13 +123,11 @@ const parsedRounds = typeof rounds === 'string'
       message: 'Job created and notifications sent to eligible students.',
       job,
     });
-
   } catch (err) {
     console.error('Create job error:', err);
     return res.status(500).json({ message: 'Failed to create job', error: err });
   }
 };
-
 
 export const getAllJobs = async (_req: Request, res: Response) => {
   try {
