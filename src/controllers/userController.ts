@@ -62,7 +62,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   const { username, password } = req.body;
 
   const user = await prisma.user.findFirst({ where: { username: username } });
-  if (!user) return res.status(403).json({ message: 'User not found' });
+  if (!user) return res.status(404).json({ message: 'User not found' });
 
   if (!user.isVerified) {
     const otp = generateOTP();
