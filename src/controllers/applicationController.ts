@@ -59,6 +59,15 @@ export const applyToJob = async (req: Request, res: Response) => {
       });
     }
 
+    const userCPT = user.isCPT; 
+    const jobCPT = (job as any).cptEligibility;
+
+    if (jobCPT === 'CPT' && !userCPT) {
+      return res.status(400).json({
+        message: 'Not eligible: This job is only for CPT candidates.',
+      });
+    }
+
     const application = await prisma.jobApplication.create({
       data: {
         user: { connect: { id: userId } },
