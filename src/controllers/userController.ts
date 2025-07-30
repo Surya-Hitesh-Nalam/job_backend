@@ -167,6 +167,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<Respon
       education: rawEducation,
       dateOfBirth,
       passedOutYear,
+      isCPT,
       noOfActiveBacklogs,
       percentage,
       ...rest
@@ -177,6 +178,7 @@ export const updateProfile = async (req: Request, res: Response): Promise<Respon
     };
 
     // ✅ Parse required types from strings
+    if(isCPT) safeData.isCPT = isCPT === 'true';
     if (percentage) safeData.percentage = parseFloat(percentage);
     if (noOfActiveBacklogs) safeData.noOfActiveBacklogs = parseInt(noOfActiveBacklogs);
     if (passedOutYear) safeData.passedOutYear = parseInt(passedOutYear);
