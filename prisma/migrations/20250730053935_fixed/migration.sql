@@ -66,6 +66,7 @@ CREATE TABLE "Job" (
     "lastDateToApply" TIMESTAMP(3),
     "allowedBranches" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "allowedPassingYears" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
+    "createdById" TEXT NOT NULL,
 
     CONSTRAINT "Job_pkey" PRIMARY KEY ("id")
 );
@@ -118,6 +119,9 @@ CREATE UNIQUE INDEX "Results_userId_jobId_roundName_key" ON "Results"("userId", 
 
 -- AddForeignKey
 ALTER TABLE "Education" ADD CONSTRAINT "Education_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Job" ADD CONSTRAINT "Job_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "JobApplication" ADD CONSTRAINT "JobApplication_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
