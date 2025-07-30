@@ -27,7 +27,7 @@ model User {
 
   firstName    String?          @db.VarChar(255)
   lastName     String?          @db.VarChar(255)
-  collegeId    String?          @db.VarChar(100)
+  isCPT        Boolean          @default(false)
   dateOfBirth  DateTime?
   phoneNumber  String?          @db.VarChar(20)
   address      String?          @db.VarChar(255)
@@ -64,6 +64,12 @@ model Education {
 
 }
 
+enum CptEligibility {
+  CPT
+  NON_CPT
+  BOTH
+}
+
 model Job {
   id             String      @id @default(uuid())
   jobTitle       String   @db.VarChar(255)
@@ -89,7 +95,7 @@ model Job {
 
   allowedBranches     String[]     @default([])
   allowedPassingYears Int[]        @default([])
-
+  cptEligibility        CptEligibility   @default(BOTH)
   createdById    String          
   createdBy      User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
 }
