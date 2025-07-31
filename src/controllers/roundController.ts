@@ -6,26 +6,26 @@ const prisma = new PrismaClient();
 
 import { sendRoundResultEmail } from '../utils/email';
 export const uploadRoundResults = async (req: Request, res: Response) => {
-  const { jobId, roundName, users, status } = req.body;
+  const { jobId, roundName, users: qualifiedUsernames } = req.body;
 
   try {
     // Validate required parameters
-    if (!jobId || !roundName || !users || !status) {
-      return res.status(400).json({ 
-        message: 'Missing required parameters: jobId, roundName, users, and status are required' 
+    if (!jobId || !roundName || !qualifiedUsernames) {
+      return res.status(400).json({
+        message: 'Missing required parameters: jobId, roundName, and users are required',
       });
     }
 
-    if (!Array.isArray(users) || users.length === 0) {
-      return res.status(400).json({ 
-        message: 'users must be a non-empty array of usernames' 
+    if (!Array.isArray(qualifiedUsernames)) {
+      return res.status(400).json({
+        message: 'users must be an array of qualified usernames',
       });
     }
 
     // Validate job exists
     const job = await prisma.job.findUnique({
       where: { id: jobId },
-      select: { id: true, jobTitle: true }
+      select: { id: true, jobTitle: true },
     });
 
     if (!job) {
@@ -38,127 +38,137 @@ export const uploadRoundResults = async (req: Request, res: Response) => {
     });
 
     if (!round) {
-      return res.status(404).json({ 
-        message: `Round "${roundName}" not found for this job.` 
+      return res.status(404).json({
+        message: `Round "${roundName}" not found for this job.`,
       });
     }
 
-    // Initialize result tracking arrays
+    // Get all users who applied for this job
+    const applications = await prisma.jobApplication.findMany({
+      where: { jobId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    // Initialize trackers
     const addedUsers: any[] = [];
     const updatedUsers: any[] = [];
     const notFoundUsers: string[] = [];
     const emailErrors: string[] = [];
-    const duplicateUsers: string[] = [];
 
-    // Track processed usernames to avoid duplicates in the same request
-    const processedUsernames = new Set<string>();
+    const processedUserIds = new Set<string>();
 
-    for (const username of users) {
+    for (const app of applications) {
+      const user = app.user;
+      const isQualified = qualifiedUsernames.includes(user.username);
+      const status = isQualified ? 'Qualified' : 'Disqualified';
+
       try {
-        // Check for duplicates in the current request
-        if (processedUsernames.has(username)) {
-          duplicateUsers.push(username);
-          continue;
-        }
-        processedUsernames.add(username);
-
-        const user = await prisma.user.findUnique({
-          where: { username: username },
-          select: { id: true, email: true, firstName: true, lastName: true, username: true }
-        });
-
-        if (!user) {
-          notFoundUsers.push(username);
-          continue;
-        }
-
-        // Check if result already exists for this user in this round
         const existingResult = await prisma.results.findUnique({
           where: {
             userId_jobId_roundName: {
               userId: user.id,
               jobId: jobId,
-              roundName: roundName
-            }
-          }
-        });
-
-        // Upsert the result (create if doesn't exist, update if exists)
-        await prisma.results.upsert({
-          where: {
-            userId_jobId_roundName: {
-              userId: user.id,
-              jobId: jobId,
-              roundName: roundName
-            }
+              roundName: roundName,
+            },
           },
-          update: { 
-            status: status,
-            timestamp: new Date() 
-          },
-          create: {
-            userId: user.id,
-            jobId: jobId,
-            roundId: round.id,
-            roundName: roundName,
-            status: status
-          }
         });
 
         const userInfo = {
           username: user.username,
           email: user.email,
           fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-          status: status
+          status,
         };
 
-        // Track whether this was an update or new addition
+        let shouldSendEmail = false;
+
         if (existingResult) {
-          updatedUsers.push(userInfo);
+          // Update only if status changed
+          if (existingResult.status !== status) {
+            await prisma.results.update({
+              where: {
+                userId_jobId_roundName: {
+                  userId: user.id,
+                  jobId: jobId,
+                  roundName: roundName,
+                },
+              },
+              data: {
+                status,
+                timestamp: new Date(),
+              },
+            });
+            updatedUsers.push(userInfo);
+            shouldSendEmail = true;
+          }
         } else {
+          // Create new result
+          await prisma.results.create({
+            data: {
+              userId: user.id,
+              jobId: jobId,
+              roundId: round.id,
+              roundName: roundName,
+              status,
+            },
+          });
           addedUsers.push(userInfo);
+          shouldSendEmail = true;
         }
 
-        // Send email notification
-        
-        try {
-          await sendRoundResultEmail(user.email, roundName, status);
-        } catch (emailError) {
-          console.error(`Email error for ${user.email}:`, emailError);
-          emailErrors.push(user.email);
+        // Send email only if needed
+        if (shouldSendEmail) {
+          try {
+            await sendRoundResultEmail(user.email, roundName, status);
+          } catch (emailError) {
+            console.error(`Email error for ${user.email}:`, emailError);
+            emailErrors.push(user.email);
+          }
         }
 
-      } catch (userError) {
-        console.error(`Error processing username ${username}:`, userError);
-        notFoundUsers.push(username);
+        processedUserIds.add(user.id);
+      } catch (err) {
+        console.error(`Error processing user ${user.username}:`, err);
+        if (user.username) {
+  notFoundUsers.push(user.username);
+}
       }
     }
 
     return res.json({
       message: 'Round results processed successfully',
       summary: {
-        totalRequested: users.length,
+        totalApplied: applications.length,
+        qualifiedReceived: qualifiedUsernames.length,
         newlyAdded: addedUsers.length,
         updated: updatedUsers.length,
         notFound: notFoundUsers.length,
-        duplicates: duplicateUsers.length,
-        emailErrors: emailErrors.length
+        emailErrors: emailErrors.length,
       },
       newlyAddedUsers: addedUsers.length > 0 ? addedUsers : undefined,
       updatedUsers: updatedUsers.length > 0 ? updatedUsers : undefined,
       notFoundUsers: notFoundUsers.length > 0 ? notFoundUsers : undefined,
-      duplicateUsers: duplicateUsers.length > 0 ? duplicateUsers : undefined,
-      emailErrors: emailErrors.length > 0 ? emailErrors : undefined
+      emailErrors: emailErrors.length > 0 ? emailErrors : undefined,
     });
-
   } catch (error) {
     console.error('Upload failed:', error);
-    return res.status(500).json({ 
-      message: 'Error uploading round results', 
-      error: process.env.NODE_ENV === 'development' ? error : 'Internal server error'
+    return res.status(500).json({
+      message: 'Error uploading round results',
+      error: process.env.NODE_ENV === 'development' ? error : 'Internal server error',
     });
   }
 };
+
 export const getUserRoundResults = async (req: Request, res: Response) => {
   const userId = (req as any).user?.id as string;
 
