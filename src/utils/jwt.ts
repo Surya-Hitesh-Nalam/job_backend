@@ -10,7 +10,7 @@ if (!JWT_SECRET) {
 
 export const generateToken = (userId: string, role: string): string => {
   return jwt.sign({ id: userId, role: role }, JWT_SECRET, {
-    expiresIn: '24h',
+    expiresIn: '5m',
     issuer: 'your-app-name',
     audience: 'your-app-users',
   });
