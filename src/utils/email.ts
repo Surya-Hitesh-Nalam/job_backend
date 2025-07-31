@@ -151,7 +151,6 @@ export const sendOtpEmail = async (to: string, otp: string): Promise<void> => {
                 color: #1e40af;
                 letter-spacing: 8px;
                 font-family: 'Courier New', monospace;
-                background: linear-gradient(45deg, #1e40af, #3730a3);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
