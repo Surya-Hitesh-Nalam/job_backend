@@ -247,7 +247,7 @@ export const deleteRound = async(req:Request,res:Response)=>{
 export const bulkDeleteUsersFromRound = async (req: Request, res: Response) => {
   try {
     const { jobId, roundName } = req.params;
-       let { usernames } = req.body; 
+       let  usernames  = req.body; 
 
     if (!jobId || !roundName || !usernames) {
       return res.status(400).json({ 
