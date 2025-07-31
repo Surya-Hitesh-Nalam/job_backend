@@ -171,6 +171,7 @@ export const getJobById = async (req: Request, res: Response) => {
         rounds: {
           orderBy: { roundNumber: 'asc' },
         },
+        applications:true,
       },
     });
 
