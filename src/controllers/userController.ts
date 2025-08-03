@@ -9,37 +9,97 @@ const prisma = new PrismaClient();
 
 import { Role } from '@prisma/client';
 
+const ADMIN_PASSKEY = process.env.ADMIN_PASSKEY || 'ADMIN_SECRET_2024';
+const SUPER_ADMIN_PASSKEY = process.env.SUPER_ADMIN_PASSKEY || 'SUPER_ADMIN_SECRET_2024';
+
 export const signup = async (req: Request, res: Response): Promise<Response> => {
-  const { username, email, password, role } = req.body;
+  const { username, email, password, role, passkey } = req.body;
 
   const existing = await prisma.user.findFirst({
     where: { OR: [{ email }, { username }] },
   });
-  if (existing) return res.status(400).json({ message: 'Username or Email already exists' });
+  if (existing) {
+    return res.status(400).json({ 
+      message: 'Username or Email already exists' 
+    });
+  }
 
-  const hashed = await hashPassword(password);
-  const otp = generateOTP();
-  const expiry = new Date(Date.now() + 15 * 60 * 1000);
+  let assignedRole: Role = Role.USER; 
 
-const validRoles = [Role.USER, Role.ADMIN, Role.SUPER_ADMIN];
-const assignedRole = validRoles.includes(role) ? role : Role.USER;
+  if (role === Role.ADMIN) {
+    if (!passkey) {
+      return res.status(400).json({
+        message: 'Passkey is required for admin registration'
+      });
+    }
+    
+    if (passkey !== ADMIN_PASSKEY) {
+      return res.status(400).json({
+        message: 'Passkey for admin is incorrect'
+      });
+    }
+    
+    assignedRole = Role.ADMIN;
+  } 
+  else if (role === Role.SUPER_ADMIN) {
+    if (!passkey) {
+      return res.status(400).json({
+        message: 'Passkey is required for super admin registration'
+      });
+    }
+    
+    if (passkey !== SUPER_ADMIN_PASSKEY) {
+      return res.status(400).json({
+        message: 'Passkey for super admin is incorrect'
+      });
+    }
+    
+    assignedRole = Role.SUPER_ADMIN;
+  }
+  else if (role === Role.USER || !role) {
+    if (passkey) {
+      return res.status(400).json({
+        message: 'Passkey is not required for student registration'
+      });
+    }
+    
+    assignedRole = Role.USER;
+  }
+  else {
+    return res.status(400).json({
+      message: 'Invalid role. Allowed roles are: USER, ADMIN, SUPER_ADMIN'
+    });
+  }
 
-  await prisma.user.create({
-    data: {
-      username,
-      email,
-      password: hashed,
-      otp,
-      otpExpiry: expiry,
-      role: assignedRole,
-    },
-  });
+  try {
+    const hashed = await hashPassword(password);
+    const otp = generateOTP();
+    const expiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-  await sendOtpEmail(email, otp);
+    await prisma.user.create({
+      data: {
+        username,
+        email,
+        password: hashed,
+        otp,
+        otpExpiry: expiry,
+        role: assignedRole,
+      },
+    });
 
-  return res.status(201).json({
-    message: 'OTP sent to email. Please verify your account.',
-  });
+    await sendOtpEmail(email, otp);
+
+    return res.status(201).json({
+      message: `OTP sent to email. Please verify your ${assignedRole.toLowerCase()} account.`,
+      role: assignedRole
+    });
+
+  } catch (error) {
+    console.error('Signup error:', error);
+    return res.status(500).json({
+      message: 'Registration failed. Please try again.'
+    });
+  }
 };
 
 export const verifyEmail = async (req: Request, res: Response): Promise<Response> => {
