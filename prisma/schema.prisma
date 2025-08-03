@@ -87,6 +87,8 @@ model Job {
   companyLogo    String?          @db.VarChar(500)
   companyEmail   String?          @db.VarChar(255)
   companyPhone   String?          @db.VarChar(50)
+  serviceAgreement Int?        @default(0)
+  noOfVacancies  Int?          @default(1)
   applications   JobApplication[] 
   rounds         Round[]
   roundResults   Results[] 
@@ -102,6 +104,7 @@ model Job {
 
 
 enum Role {
+  SUPER_ADMIN
   ADMIN
   USER
 }
