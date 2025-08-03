@@ -87,7 +87,7 @@ model Job {
   companyLogo    String?          @db.VarChar(500)
   companyEmail   String?          @db.VarChar(255)
   companyPhone   String?          @db.VarChar(50)
-  serviceAgreement Int?        @default(0)
+  serviceAgreement String?        @db.Text
   noOfVacancies  Int?          @default(1)
   applications   JobApplication[] 
   rounds         Round[]

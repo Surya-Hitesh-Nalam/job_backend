@@ -74,7 +74,7 @@ export const createJob = async (req: Request, res: Response) => {
         companyWebsite,
         companyEmail,
         companyPhone,
-        serviceAgreement: serviceAgreement ? Number(serviceAgreement) : 0,
+        serviceAgreement,
         noOfVacancies: noOfVacancies,
         createdById: adminId,
         allowedBranches: parsedAllowedBranches,
