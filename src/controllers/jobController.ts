@@ -275,7 +275,7 @@ export const updateJob = async (req: Request, res: Response) => {
       ...(companyWebsite && { companyWebsite }),
       ...(companyEmail && { companyEmail }),
       ...(companyPhone && { companyPhone }),
-      ...(serviceAgreement && { serviceAgreement: Number(serviceAgreement) }),
+      ...(serviceAgreement && { serviceAgreement: serviceAgreement }),
       ...(noOfVacancies && { noOfVacancies }),
       ...(lastDateToApply && { lastDateToApply: new Date(lastDateToApply) }),
       ...(parsedAllowedBranches.length && { allowedBranches: parsedAllowedBranches }),
