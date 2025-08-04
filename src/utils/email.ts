@@ -31,7 +31,7 @@ export const sendOtpEmail = async (to: string, otp: string): Promise<void> => {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>JobQuest - OTP Verification</title>
+        <title>Hive - OTP Verification</title>
         <style>
             * {
                 margin: 0;
@@ -251,14 +251,14 @@ export const sendOtpEmail = async (to: string, otp: string): Promise<void> => {
     <body>
         <div class="email-container">
             <div class="header">
-                <div class="logo">JobQuest</div>
+                <div class="logo">Hive</div>
                 <div class="tagline">Your Gateway to Career Success</div>
             </div>
             
             <div class="content">
                 <h1 class="greeting">Verify Your Account</h1>
                 <p class="message">
-                    We received a request to verify your JobQuest account. Use the OTP code below to complete your verification process.
+                    We received a request to verify your Hive account. Use the OTP code below to complete your verification process.
                 </p>
                 
                 <div class="otp-container">
@@ -271,7 +271,7 @@ export const sendOtpEmail = async (to: string, otp: string): Promise<void> => {
                 
                 <div class="security-note">
                     <h3><span class="security-icon">🔒</span>Security Notice</h3>
-                    <p>This OTP is confidential and for your use only. Never share this code with anyone. JobQuest will never ask for your OTP over phone or email.</p>
+                    <p>This OTP is confidential and for your use only. Never share this code with anyone. Hive will never ask for your OTP over phone or email.</p>
                 </div>
             </div>
             
@@ -279,7 +279,7 @@ export const sendOtpEmail = async (to: string, otp: string): Promise<void> => {
                 <p>If you didn't request this verification, please ignore this email.</p>
                 <p>Need help? Contact our support team anytime.</p>
                 <div class="company-info">
-                    © 2025 JobQuest. All rights reserved.<br>
+                    © 2025 Hive. All rights reserved.<br>
                     This is an automated email, please do not reply.
                 </div>
             </div>
@@ -289,9 +289,9 @@ export const sendOtpEmail = async (to: string, otp: string): Promise<void> => {
     `;
 
     const mailOptions = {
-      from: `"JobQuest" <${process.env.EMAIL_USER}>`,
+      from: `"Hive" <${process.env.EMAIL_USER}>`,
       to,
-      subject: '🔐 JobQuest - Your OTP Verification Code',
+      subject: '🔐 Hive - Your OTP Verification Code',
       html: otpTemplate,
     };
 
@@ -329,7 +329,7 @@ export const sendRoundResultEmail = async (
   <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>JobQuest - Round Result</title>
+      <title>Hive - Round Result</title>
       <style>
           * {
               margin: 0;
@@ -445,7 +445,7 @@ export const sendRoundResultEmail = async (
           .cta-button {
               display: inline-block;
               padding: 16px 32px;
-              background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+              background: linear-gradient(135deg, #1e40af 0%, #413b93ff 100%);
               color: white;
               text-decoration: none;
               border-radius: 50px;
@@ -591,6 +591,7 @@ export const sendRoundResultEmail = async (
               .cta-button {
                   padding: 14px 28px;
                   font-size: 14px;
+                  color: white;
               }
           }
       </style>
@@ -598,7 +599,7 @@ export const sendRoundResultEmail = async (
   <body>
       <div class="email-container">
           <div class="header">
-              <div class="logo">JobQuest</div>
+              <div class="logo">Hive</div>
               <div class="tagline">Your Gateway to Career Success</div>
           </div>
           
@@ -642,7 +643,7 @@ export const sendRoundResultEmail = async (
               <p>Need assistance? Our support team is here to help you 24/7.</p>
               
               <div class="company-info">
-                  © 2025 JobQuest. All rights reserved.<br>
+                  © 2025 Hive. All rights reserved.<br>
                   This is an automated email, please do not reply directly.
               </div>
           </div>
@@ -653,9 +654,9 @@ export const sendRoundResultEmail = async (
 
   try {
     const mailOptions = {
-      from: `"JobQuest" <${process.env.EMAIL_USER}>`,
+      from: `"Hive" <${process.env.EMAIL_USER}>`,
       to,
-      subject: `${isQualified ? '🎉' : '📋'} JobQuest - ${roundName} Round Result`,
+      subject: `${isQualified ? '🎉' : '📋'} Hive - ${roundName} Round Result`,
       html: roundResultTemplate,
     };
 
@@ -694,7 +695,7 @@ export const sendJobApplicationEmail = async (
   <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>JobQuest - Application Confirmation</title>
+      <title>Hive - Application Confirmation</title>
       <style>
           * {
               margin: 0;
@@ -1063,7 +1064,7 @@ export const sendJobApplicationEmail = async (
   <body>
       <div class="email-container">
           <div class="header">
-              <div class="logo">JobQuest</div>
+              <div class="logo">Hive</div>
               <div class="tagline">Your Gateway to Career Success</div>
           </div>
           
@@ -1140,11 +1141,11 @@ export const sendJobApplicationEmail = async (
               <div class="company-signature">
                   Best regards,<br>
                   <strong>${companyName} Recruitment Team</strong><br>
-                  <em>via JobQuest Platform</em>
+                  <em>via Hive Platform</em>
               </div>
               
               <div class="company-info">
-                  © 2025 JobQuest. All rights reserved.<br>
+                  © 2025 Hive. All rights reserved.<br>
                   This is an automated confirmation email.
               </div>
           </div>
@@ -1155,9 +1156,9 @@ export const sendJobApplicationEmail = async (
 
   try {
     const mailOptions = {
-      from: `"JobQuest - ${companyName}" <${process.env.EMAIL_USER}>`,
+      from: `"Hive - ${companyName}" <${process.env.EMAIL_USER}>`,
       to,
-      subject: `🎯 Application Confirmed: ${jobTitle} at ${companyName} | JobQuest`,
+      subject: `🎯 Application Confirmed: ${jobTitle} at ${companyName} | Hive`,
       html: jobApplicationTemplate,
     };
 
@@ -1198,7 +1199,7 @@ export const sendJobPostedEmail = async (
   <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>JobQuest - New Job Alert</title>
+      <title>Hive - New Job Alert</title>
       <style>
           * {
               margin: 0;
@@ -1600,7 +1601,7 @@ export const sendJobPostedEmail = async (
   <body>
       <div class="email-container">
           <div class="header">
-              <div class="logo">JobQuest</div>
+              <div class="logo">Hive</div>
               <div class="tagline">Your Gateway to Career Success</div>
           </div>
           
@@ -1693,7 +1694,7 @@ export const sendJobPostedEmail = async (
               </div>
               
               <div class="company-info">
-                  © 2025 JobQuest. All rights reserved.<br>
+                  © 2025 Hive. All rights reserved.<br>
                   You're receiving this because you're subscribed to job alerts.
               </div>
           </div>
@@ -1704,7 +1705,7 @@ export const sendJobPostedEmail = async (
 
   try {
     const mailOptions = {
-      from: `"JobQuest Opportunities" <${process.env.EMAIL_USER}>`,
+      from: `"Hive Opportunities" <${process.env.EMAIL_USER}>`,
       to,
       subject: `🔥 Hot Job Alert: ${jobTitle} at ${companyName} - Apply Before ${lastDateToApply}!`,
       html: jobNotificationTemplate,

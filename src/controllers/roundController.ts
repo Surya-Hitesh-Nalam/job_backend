@@ -205,13 +205,14 @@ export const getJobRoundSummary = async (req: Request, res: Response) => {
 };
 
 export const getSpecificRoundResults = async (req: Request, res: Response) => {
-  const { jobId, roundName } = req.params;
+  const { jobId } = req.params;
+  const { roundName } = req.params;
 
   try {
     const results = await prisma.results.findMany({
       where: {
         jobId,
-        roundName,
+        roundName:String(roundName),
       },
       include: {
         user: true,

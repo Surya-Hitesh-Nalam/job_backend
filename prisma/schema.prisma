@@ -80,6 +80,7 @@ model Job {
   experience     String?  @db.VarChar(100) 
   jobRole        String?  @db.VarChar(100) 
   jobType        String?  @db.VarChar(100) 
+  jobSector     String?  @db.VarChar(100)
   postedDate     DateTime @default(now())
 
   companyName    String           @db.VarChar(255)
