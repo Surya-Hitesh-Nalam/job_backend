@@ -77,7 +77,7 @@ export const createJob = async (req: Request, res: Response) => {
         companyEmail,
         companyPhone,
         serviceAgreement,
-        noOfVacancies: noOfVacancies,
+        noOfVacancies: Number(noOfVacancies),
         createdById: adminId,
         allowedBranches: parsedAllowedBranches,
         allowedPassingYears: parsedAllowedPassingYears,
@@ -276,7 +276,7 @@ export const updateJob = async (req: Request, res: Response) => {
       ...(companyEmail && { companyEmail }),
       ...(companyPhone && { companyPhone }),
       ...(serviceAgreement && { serviceAgreement: serviceAgreement }),
-      ...(noOfVacancies && { noOfVacancies }),
+      ...(noOfVacancies && { noOfVacancies:Number(noOfVacancies) }),
       ...(lastDateToApply && { lastDateToApply: new Date(lastDateToApply) }),
       ...(parsedAllowedBranches.length && { allowedBranches: parsedAllowedBranches }),
       ...(parsedAllowedPassingYears.length && {
